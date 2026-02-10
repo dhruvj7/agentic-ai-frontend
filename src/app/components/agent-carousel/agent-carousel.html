@@ -1,0 +1,17 @@
+<section class="carousel-section">
+  <h2 class="carousel-title">Choose an agent</h2>
+  <div class="carousel">
+    @for (agent of agents; track agent.id) {
+      <button
+        type="button"
+        class="agent-card"
+        [class.selected]="(selectedAgent()?.id) === agent.id"
+        (click)="selectAgent(agent)"
+      >
+        <span class="agent-icon">{{ agent.icon }}</span>
+        <span class="agent-name">{{ agent.name }}</span>
+        <span class="agent-desc">{{ agent.description }}</span>
+      </button>
+    }
+  </div>
+</section>

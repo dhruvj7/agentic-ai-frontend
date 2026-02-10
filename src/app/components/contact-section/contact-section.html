@@ -1,0 +1,51 @@
+<section class="contact" id="contact">
+  <div class="contact-inner">
+    <h2 class="section-title animate-fade-in-up">Contact Us</h2>
+    <p class="section-subtitle animate-fade-in-up" style="animation-delay: 0.05s">Have a query? Send us a message and we’ll get back to you soon.</p>
+    <form class="contact-form" [formGroup]="form" (ngSubmit)="onSubmit()">
+      <div class="form-row">
+        <label>
+          <span>Your name <em>*</em></span>
+          <input type="text" formControlName="name" placeholder="Full name" />
+          @if (hasError('name', 'required')) {
+            <span class="error">Name is required.</span>
+          }
+          @if (hasError('name', 'minlength')) {
+            <span class="error">At least 2 characters.</span>
+          }
+        </label>
+        <label>
+          <span>Email <em>*</em></span>
+          <input type="email" formControlName="email" placeholder="you@example.com" />
+          @if (hasError('email', 'required')) {
+            <span class="error">Email is required.</span>
+          }
+          @if (hasError('email', 'email')) {
+            <span class="error">Enter a valid email.</span>
+          }
+        </label>
+      </div>
+      <label>
+        <span>Subject <em>*</em></span>
+        <input type="text" formControlName="subject" placeholder="e.g. Appointment enquiry" />
+        @if (hasError('subject', 'required')) {
+          <span class="error">Subject is required.</span>
+        }
+      </label>
+      <label>
+        <span>Message <em>*</em></span>
+        <textarea formControlName="message" rows="4" placeholder="Your message..."></textarea>
+        @if (hasError('message', 'required')) {
+          <span class="error">Message is required.</span>
+        }
+        @if (hasError('message', 'minlength')) {
+          <span class="error">At least 10 characters.</span>
+        }
+      </label>
+      @if (submitted()) {
+        <p class="success-msg">Thanks! We’ve received your message and will get back to you soon.</p>
+      }
+      <button type="submit" class="btn-submit" [disabled]="form.invalid">Send message</button>
+    </form>
+  </div>
+</section>

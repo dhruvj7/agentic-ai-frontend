@@ -1,0 +1,31 @@
+<section class="products" id="agents">
+  <div class="products-inner">
+    <h2 class="section-title animate-fade-in-up">Our Agents</h2>
+    <p class="section-subtitle animate-fade-in-up" style="animation-delay: 0.05s">One workflow: from symptoms to appointment</p>
+    <div class="carousel-wrapper carousel-expand">
+      <button type="button" class="carousel-btn prev" aria-label="Previous" (click)="prev()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div class="carousel-viewport">
+        <div class="carousel-track" [style.transform]="'translateX(' + offset() + '%)'">
+          @for (agent of agents; track agent.id) {
+            <div class="card" [class.active]="currentIndex() === $index">
+              <span class="card-icon">{{ agent.icon }}</span>
+              <h3 class="card-title">{{ agent.name }}</h3>
+              <p class="card-desc">{{ agent.description }}</p>
+              <p class="card-long">{{ agent.longDescription }}</p>
+            </div>
+          }
+        </div>
+      </div>
+      <button type="button" class="carousel-btn next" aria-label="Next" (click)="next()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
+    </div>
+    <div class="carousel-dots">
+      @for (agent of agents; track agent.id; let i = $index) {
+        <button type="button" class="dot" [class.active]="currentIndex() === i" (click)="goTo(i)" [attr.aria-label]="'Go to ' + agent.name"></button>
+      }
+    </div>
+  </div>
+</section>

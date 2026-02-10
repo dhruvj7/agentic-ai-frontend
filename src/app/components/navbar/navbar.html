@@ -1,0 +1,24 @@
+<header class="navbar" [class.menu-open]="menuOpen()">
+  <a class="navbar-brand" routerLink="/" (click)="closeMenu()">
+    <span class="logo-svg" aria-hidden="true">
+      <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="20" cy="20" r="17" stroke="currentColor" stroke-width="1.8" opacity="0.35"/>
+        <path d="M20 10v6l6 4-6 4v6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.6"/>
+        <circle cx="20" cy="20" r="5" fill="currentColor"/>
+        <circle cx="20" cy="20" r="1.8" fill="var(--color-bg)"/>
+      </svg>
+    </span>
+    <span class="brand-name">AI Care Navigator</span>
+  </a>
+  <button type="button" class="menu-toggle" aria-label="Toggle menu" (click)="toggleMenu()">
+    <span class="hamburger"></span>
+    <span class="hamburger"></span>
+    <span class="hamburger"></span>
+  </button>
+  <nav class="nav-links" [class.visible]="menuOpen()">
+    <a class="nav-link" routerLink="/chat" (click)="closeMenu()">Get Started</a>
+    <a class="nav-link" routerLink="/" fragment="agents" (click)="onNavClick($event, 'agents')">Agents</a>
+    <a class="nav-link" routerLink="/" fragment="guidance" (click)="onNavClick($event, 'guidance')">Guidance</a>
+    <a class="nav-link" routerLink="/" fragment="contact" (click)="onNavClick($event, 'contact')">Contact Us</a>
+  </nav>
+</header>

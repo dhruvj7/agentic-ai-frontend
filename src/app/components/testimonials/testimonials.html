@@ -1,0 +1,25 @@
+<section class="testimonials">
+  <div class="testimonials-inner">
+    <h2 class="section-title animate-fade-in-up">What people say about AI Care Navigator</h2>
+    <p class="section-subtitle animate-fade-in-up" style="animation-delay: 0.05s">Coordinated care that puts you first.</p>
+    <div class="cards">
+      @for (t of testimonials; track t.id; let i = $index) {
+        <div class="card animate-fade-in-up" [style.animation-delay]="(0.1 + i * 0.08) + 's'">
+          <div class="card-header">
+            <div class="avatar">{{ t.name.charAt(0) }}</div>
+            <div class="meta">
+              <strong>{{ t.name }}</strong>
+              <span>{{ t.role }}</span>
+            </div>
+            <div class="stars">
+              @for (star of [1,2,3,4,5]; track star) {
+                <span class="star" [class.filled]="star <= t.rating">★</span>
+              }
+            </div>
+          </div>
+          <p class="quote">"{{ t.content }}"</p>
+        </div>
+      }
+    </div>
+  </div>
+</section>

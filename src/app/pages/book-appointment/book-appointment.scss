@@ -1,0 +1,195 @@
+.book-page {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+
+.book-header {
+  margin-bottom: 2rem;
+
+  .back {
+    display: inline-block;
+    margin-bottom: 0.75rem;
+    color: var(--color-primary);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.9375rem;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  h1 {
+    margin: 0 0 0.5rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-text);
+  }
+
+  .doctor-summary {
+    display: flex;
+    gap: 0.5rem;
+    font-size: 0.9375rem;
+    color: var(--color-text-muted);
+
+    .doctor-name {
+      font-weight: 600;
+      color: var(--color-text);
+    }
+  }
+}
+
+.book-form {
+  background: var(--color-surface-elevated);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-md);
+
+  label {
+    display: block;
+    margin-bottom: 1.25rem;
+
+    span {
+      display: block;
+      margin-bottom: 0.35rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--color-text-muted);
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 0.65rem 0.75rem;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      font-size: 0.9375rem;
+      font-family: var(--font-sans);
+      color: var(--color-text);
+      background: var(--color-surface);
+
+      &.ng-invalid.ng-touched {
+        border-color: var(--color-error, #dc2626);
+      }
+
+      &:focus {
+        outline: none;
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 2px var(--color-primary-muted);
+      }
+    }
+
+    .error {
+      display: block;
+      margin-top: 0.25rem;
+      font-size: 0.75rem;
+      color: var(--color-error, #dc2626);
+    }
+
+    .hint {
+      display: block;
+      margin-top: 0.25rem;
+      font-size: 0.8rem;
+      color: var(--color-text-muted);
+    }
+
+    span em {
+      font-style: normal;
+      color: var(--color-error, #dc2626);
+    }
+  }
+
+  .btn-submit {
+    width: 100%;
+    margin-top: 0.5rem;
+    padding: 0.875rem;
+    background: linear-gradient(135deg, var(--color-primary), #0891b2);
+    color: var(--color-bg);
+    border: none;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    font-size: 0.9375rem;
+    font-family: var(--font-sans);
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+
+    &:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(6, 182, 212, 0.4);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+}
+
+.success {
+  text-align: center;
+  padding: 2rem 1rem;
+  background: var(--color-primary-muted);
+  border: 1px solid rgba(6, 182, 212, 0.35);
+  border-radius: var(--radius-lg);
+
+  .success-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    background: var(--color-primary);
+    color: var(--color-bg);
+    font-size: 1.5rem;
+    font-weight: 700;
+    border-radius: 50%;
+    margin-bottom: 1rem;
+  }
+
+  h2 {
+    margin: 0 0 0.5rem;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-text);
+  }
+
+  p {
+    margin: 0 0 1.5rem;
+    font-size: 0.9375rem;
+    line-height: 1.55;
+    color: var(--color-text-muted);
+  }
+
+  .btn-home {
+    display: inline-block;
+    padding: 0.65rem 1.25rem;
+    background: var(--color-primary);
+    color: var(--color-bg);
+    font-weight: 600;
+    text-decoration: none;
+    border-radius: var(--radius-sm);
+    font-size: 0.9375rem;
+
+    &:hover {
+      background: var(--color-primary-hover);
+    }
+  }
+}
+
+.not-found {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--color-text-muted);
+
+  a {
+    color: var(--color-primary);
+    font-weight: 600;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}

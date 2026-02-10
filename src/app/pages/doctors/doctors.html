@@ -1,0 +1,36 @@
+<div class="doctors-page">
+  <div class="doctors-header">
+    <a class="back" routerLink="/">← Back to home</a>
+    <h1>Matched doctors</h1>
+    <p>Choose a doctor and book an appointment.</p>
+  </div>
+  <div class="doctors-grid">
+    @for (doctor of doctors(); track doctor.id) {
+      <article class="doctor-card">
+        <div class="card-body">
+          <div class="avatar">{{ getInitials(doctor.name) }}</div>
+          <h3>{{ doctor.name }}</h3>
+          <p class="specialty">{{ doctor.specialty }}</p>
+          <p class="qualification">{{ doctor.qualification }}</p>
+          <p class="experience">{{ doctor.experience }} experience</p>
+          <div class="rating">★ {{ doctor.rating }}</div>
+          @if (doctor.availableSlots && doctor.availableSlots.length) {
+            <div class="slots">
+              <span class="slots-label">Available slots:</span>
+              <div class="slot-chips">
+                @for (slot of doctor.availableSlots; track slot) {
+                  <span class="slot-chip">{{ slot }}</span>
+                }
+              </div>
+            </div>
+          }
+        </div>
+        <a [routerLink]="['/book-appointment', doctor.id]" class="btn-book">Book appointment</a>
+      </article>
+    }
+  </div>
+  @if (doctors().length === 0) {
+    <p class="empty">No matched doctors yet. Use the chat to describe your symptoms and we’ll suggest doctors.</p>
+    <a routerLink="/chat" class="link-chat">Go to chat</a>
+  }
+</div>

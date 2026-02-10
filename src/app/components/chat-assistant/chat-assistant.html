@@ -1,0 +1,56 @@
+<section class="chat-container">
+  <div class="chat-header">
+    <span class="chat-avatar">◇</span>
+    <div class="chat-agent-info">
+      <h3>{{ assistantName }}</h3>
+      <p>Describe your symptoms or ask anything—I’ll guide you to the right next steps.</p>
+    </div>
+  </div>
+  <div class="messages" #messagesContainer>
+    @for (msg of messages(); track $index) {
+      <div
+        class="message"
+        [class.user]="msg.role === 'user'"
+        [class.assistant]="msg.role === 'assistant'"
+        [class.animate-msg]="true"
+      >
+        @if (msg.role === 'user') {
+          <p class="message-content">{{ msg.content }}</p>
+        } @else {
+          <span class="message-label">{{ assistantName }}</span>
+          <p class="message-content">{{ msg.content }}</p>
+          @if (msg.matchedDoctors && msg.matchedDoctors.length) {
+            <button type="button" class="cta-doctors" (click)="viewMatchedDoctors()">
+              View matched doctors & book appointment
+            </button>
+          }
+        }
+      </div>
+    } @empty {
+      @if (!isTyping()) {
+        <p class="placeholder">Type your symptoms or a question below to get started.</p>
+      }
+    }
+    @if (isTyping()) {
+      <div class="message assistant typing animate-msg">
+        <span class="message-label">{{ assistantName }}</span>
+        <div class="typing-dots">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+    }
+  </div>
+  <div class="input-row">
+    <input
+      type="text"
+      placeholder="e.g. I’m having a fever and headache..."
+      [value]="inputValue()"
+      (input)="onInput($event)"
+      (keydown.enter)="send()"
+    />
+    <button type="button" class="send-btn" (click)="send()" [disabled]="!inputValue().trim()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+      Send
+    </button>
+  </div>
+</section>

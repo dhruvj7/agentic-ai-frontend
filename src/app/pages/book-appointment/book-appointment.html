@@ -1,0 +1,71 @@
+<div class="book-page">
+  @if (doctor(); as d) {
+    <div class="book-header">
+      <a class="back" routerLink="/doctors">← Back to doctors</a>
+      <h1>Book appointment</h1>
+      <div class="doctor-summary">
+        <span class="doctor-name">{{ d.name }}</span>
+        <span class="doctor-specialty">{{ d.specialty }}</span>
+      </div>
+    </div>
+    @if (!submitted()) {
+      <form class="book-form" [formGroup]="form" (ngSubmit)="onSubmit()">
+        <label>
+          <span>Your name <em>*</em></span>
+          <input type="text" formControlName="name" placeholder="Full name" />
+          @if (hasError('name', 'required')) {
+            <span class="error">Name is required.</span>
+          }
+          @if (hasError('name', 'minlength')) {
+            <span class="error">Name must be at least 2 characters.</span>
+          }
+        </label>
+        <label>
+          <span>Email <em>*</em></span>
+          <input type="email" formControlName="email" placeholder="you@example.com" />
+          @if (hasError('email', 'required')) {
+            <span class="error">Email is required.</span>
+          }
+          @if (hasError('email', 'email')) {
+            <span class="error">Please enter a valid email address.</span>
+          }
+        </label>
+        <label>
+          <span>Available slot <em>*</em></span>
+          <select formControlName="slot">
+            <option value="">Select a slot</option>
+            @for (slot of availableSlots(); track slot) {
+              <option [value]="slot">{{ slot }}</option>
+            }
+          </select>
+          @if (hasError('slot', 'required')) {
+            <span class="error">Please select an available slot.</span>
+          }
+          @if (availableSlots().length === 0) {
+            <span class="hint">No slots available for this doctor at the moment.</span>
+          }
+        </label>
+        <label>
+          <span>Brief reason for visit</span>
+          <input type="text" formControlName="reason" placeholder="e.g. Follow-up for fever" />
+          @if (hasError('reason', 'maxlength')) {
+            <span class="error">Reason must be 500 characters or less.</span>
+          }
+        </label>
+        <button type="submit" class="btn-submit" [disabled]="form.invalid || availableSlots().length === 0">Confirm appointment</button>
+      </form>
+    } @else {
+      <div class="success">
+        <span class="success-icon">✓</span>
+        <h2>Appointment requested</h2>
+        <p>We've received your request for <strong>{{ form.get('slot')?.value }}</strong> with {{ d.name }}. You'll receive a confirmation email at {{ form.get('email')?.value }}.</p>
+        <a routerLink="/" class="btn-home">Back to home</a>
+      </div>
+    }
+  } @else {
+    <div class="not-found">
+      <p>Doctor not found.</p>
+      <a routerLink="/doctors">View doctors</a>
+    </div>
+  }
+</div>
