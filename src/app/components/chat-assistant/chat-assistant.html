@@ -3,9 +3,10 @@
     <span class="chat-avatar">◇</span>
     <div class="chat-agent-info">
       <h3>{{ assistantName }}</h3>
-      <p>Describe your symptoms or ask anything—I’ll guide you to the right next steps.</p>
+      <p>Describe your symptoms or ask anything—I'll guide you to the right next steps.</p>
     </div>
   </div>
+
   <div class="messages" #messagesContainer>
     @for (msg of messages(); track $index) {
       <div
@@ -14,42 +15,445 @@
         [class.assistant]="msg.role === 'assistant'"
         [class.animate-msg]="true"
       >
+        <!-- USER MESSAGE -->
         @if (msg.role === 'user') {
-          <p class="message-content">{{ msg.content }}</p>
-        } @else {
+          <p class="message-content">{{ msg.content.text }}</p>
+        }
+
+        <!-- ASSISTANT MESSAGE -->
+        @else {
           <span class="message-label">{{ assistantName }}</span>
-          <p class="message-content">{{ msg.content }}</p>
-          @if (msg.matchedDoctors && msg.matchedDoctors.length) {
-            <button type="button" class="cta-doctors" (click)="viewMatchedDoctors()">
-              View matched doctors & book appointment
-            </button>
+
+          <!-- MULTI-INTENT RESPONSE -->
+          @if (msg.content.type === 'multi_intent') {
+            <div class="multi-intent-response">
+              <p class="message-intro">{{ msg.content.text }}</p>
+
+              @for (subResult of msg.content.subResults; track $index) {
+                <div class="sub-result" [attr.data-intent]="subResult.intent">
+                  <!-- SYMPTOM ANALYSIS SECTION -->
+                  @if (subResult.intent === 'symptom_analysis') {
+                    <div class="symptom-analysis">
+                      <p class="sub-message">{{ subResult.message }}</p>
+
+                      @if (subResult.analysis) {
+                        <div class="analysis-card">
+                          <div
+                            class="severity-badge"
+                            [attr.data-severity]="subResult.analysis.severity"
+                          >
+                            {{ getSeverityLabel(subResult.analysis.severity) }}
+                          </div>
+
+                          <div class="analysis-section">
+                            <h4>📋 Analysis</h4>
+                            <p>{{ subResult.analysis.primary_analysis }}</p>
+
+                            @if (subResult.analysis.differential_diagnosis.length) {
+                              <div class="diagnosis-list">
+                                <strong>Possible conditions:</strong>
+                                <ul>
+                                  @for (
+                                    diagnosis of subResult.analysis.differential_diagnosis;
+                                    track diagnosis
+                                  ) {
+                                    <li>{{ diagnosis }}</li>
+                                  }
+                                </ul>
+                              </div>
+                            }
+                          </div>
+
+                          @if (subResult.analysis.red_flags.length) {
+                            <div class="red-flags">
+                              <h4>⚠️ Important Warnings</h4>
+                              <ul>
+                                @for (flag of subResult.analysis.red_flags; track flag) {
+                                  <li>{{ flag }}</li>
+                                }
+                              </ul>
+                            </div>
+                          }
+                        </div>
+                      }
+
+                      @if (subResult.recommendations) {
+                        <div class="recommendations">
+                          @if (subResult.recommendations.immediate_actions.length) {
+                            <div class="rec-section">
+                              <h4>🎯 Immediate Actions</h4>
+                              <ul>
+                                @for (
+                                  action of subResult.recommendations.immediate_actions;
+                                  track action
+                                ) {
+                                  <li [innerHTML]="action"></li>
+                                }
+                              </ul>
+                            </div>
+                          }
+
+                          @if (subResult.recommendations.home_care_advice.length) {
+                            <div class="rec-section">
+                              <h4>🏠 Home Care</h4>
+                              <ul>
+                                @for (
+                                  advice of subResult.recommendations.home_care_advice;
+                                  track advice
+                                ) {
+                                  <li>{{ advice }}</li>
+                                }
+                              </ul>
+                            </div>
+                          }
+
+                          @if (subResult.recommendations.when_to_seek_help.length) {
+                            <div class="rec-section emergency">
+                              <h4>🚨 When to Seek Immediate Help</h4>
+                              <ul>
+                                @for (
+                                  help of subResult.recommendations.when_to_seek_help;
+                                  track help
+                                ) {
+                                  <li>{{ help }}</li>
+                                }
+                              </ul>
+                            </div>
+                          }
+                        </div>
+                      }
+
+                      @if (subResult.careOptions?.matched_doctors?.length) {
+                        <div class="matched-doctors">
+                          <h4>👨‍⚕️ Recommended Doctors</h4>
+                          <div class="doctor-grid">
+                            @for (
+                              doctor of subResult.careOptions?.matched_doctors?.slice(0, 3);
+                              track doctor.id
+                            ) {
+                              <div class="doctor-card" (click)="selectDoctor(doctor)">
+                                @if (doctor.imageUrl) {
+                                  <img
+                                    [src]="doctor.imageUrl"
+                                    [alt]="doctor.name"
+                                    class="doctor-image"
+                                  />
+                                } @else {
+                                  <div class="doctor-avatar">{{ doctor.name.charAt(0) }}</div>
+                                }
+                                <div class="doctor-info">
+                                  <strong>{{ doctor.name }}</strong>
+                                  <span>{{ doctor.specialty }}</span>
+                                  @if (doctor.department) {
+                                    <span class="dept">{{ doctor.department }}</span>
+                                  }
+                                  @if (doctor.rating) {
+                                    <span class="rating">⭐ {{ doctor.rating.toFixed(1) }}</span>
+                                  }
+                                  @if (doctor.experience) {
+                                    <span class="experience">{{ doctor.experience }}</span>
+                                  }
+                                </div>
+                              </div>
+                            }
+                          </div>
+                          @if ((subResult.careOptions?.matched_doctors?.length ?? 0) > 3) {
+                            <button class="view-all-btn" (click)="viewMatchedDoctors()">
+                              View all {{ subResult.careOptions?.matched_doctors?.length }} doctors
+                            </button>
+                          }
+                        </div>
+                      }
+                    </div>
+                  }
+
+                  <!-- APPOINTMENT BOOKING SECTION -->
+                  @if (subResult.intent === 'appointment_booking') {
+                    <div class="appointment-booking">
+                      <p class="sub-message">{{ subResult.message }}</p>
+
+                      @if (subResult.bookingFlow) {
+                        <div class="booking-card">
+                          <h4>📅 Booking Information</h4>
+
+                          @if (subResult.bookingFlow.next_questions.length) {
+                            <div class="next-questions">
+                              <p><strong>Please provide:</strong></p>
+                              <ul>
+                                @for (
+                                  question of subResult.bookingFlow.next_questions;
+                                  track question
+                                ) {
+                                  <li>{{ question }}</li>
+                                }
+                              </ul>
+                            </div>
+                          }
+
+                          @if (subResult.instructions?.length) {
+                            <div class="booking-steps">
+                              <p><strong>Booking Steps:</strong></p>
+                              <ol>
+                                @for (instruction of subResult.instructions; track instruction) {
+                                  <li>{{ instruction }}</li>
+                                }
+                              </ol>
+                            </div>
+                          }
+
+                          <button class="cta-book" (click)="viewMatchedDoctors()">
+                            📅 Book Appointment Now
+                          </button>
+                        </div>
+                      }
+                    </div>
+                  }
+
+                  @if (subResult.nextSteps?.length) {
+                    <div class="next-steps">
+                      <h4>✨ Next Steps</h4>
+                      <ul>
+                        @for (step of subResult.nextSteps; track step) {
+                          <li>{{ step }}</li>
+                        }
+                      </ul>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+
+          <!-- SINGLE INTENT: SYMPTOM ANALYSIS -->
+          @else if (msg.content.type === 'symptom_analysis') {
+            <div class="symptom-analysis">
+              <p class="message-content">{{ msg.content.text }}</p>
+
+              @if (msg.content.analysis) {
+                <div class="analysis-card">
+                  <div class="severity-badge" [attr.data-severity]="msg.content.analysis.severity">
+                    {{ getSeverityLabel(msg.content.analysis.severity) }}
+                  </div>
+
+                  <div class="analysis-section">
+                    <h4>📋 Analysis</h4>
+                    <p>{{ msg.content.analysis.primary_analysis }}</p>
+
+                    @if (msg.content.analysis.differential_diagnosis.length) {
+                      <div class="diagnosis-list">
+                        <strong>Possible conditions:</strong>
+                        <ul>
+                          @for (
+                            diagnosis of msg.content.analysis.differential_diagnosis;
+                            track diagnosis
+                          ) {
+                            <li>{{ diagnosis }}</li>
+                          }
+                        </ul>
+                      </div>
+                    }
+                  </div>
+
+                  @if (msg.content.analysis.red_flags.length) {
+                    <div class="red-flags">
+                      <h4>⚠️ Important Warnings</h4>
+                      <ul>
+                        @for (flag of msg.content.analysis.red_flags; track flag) {
+                          <li>{{ flag }}</li>
+                        }
+                      </ul>
+                    </div>
+                  }
+                </div>
+              }
+
+              @if (msg.content.recommendations) {
+                <div class="recommendations">
+                  @if (msg.content.recommendations.immediate_actions.length) {
+                    <div class="rec-section">
+                      <h4>🎯 Immediate Actions</h4>
+                      <ul>
+                        @for (
+                          action of msg.content.recommendations.immediate_actions;
+                          track action
+                        ) {
+                          <li [innerHTML]="action"></li>
+                        }
+                      </ul>
+                    </div>
+                  }
+
+                  @if (msg.content.recommendations.home_care_advice.length) {
+                    <div class="rec-section">
+                      <h4>🏠 Home Care</h4>
+                      <ul>
+                        @for (
+                          advice of msg.content.recommendations.home_care_advice;
+                          track advice
+                        ) {
+                          <li>{{ advice }}</li>
+                        }
+                      </ul>
+                    </div>
+                  }
+
+                  @if (msg.content.recommendations.when_to_seek_help.length) {
+                    <div class="rec-section emergency">
+                      <h4>🚨 When to Seek Immediate Help</h4>
+                      <ul>
+                        @for (help of msg.content.recommendations.when_to_seek_help; track help) {
+                          <li>{{ help }}</li>
+                        }
+                      </ul>
+                    </div>
+                  }
+
+                  @if (msg.content.recommendations.preparation_for_doctor.length) {
+                    <div class="rec-section">
+                      <h4>📝 Prepare for Doctor Visit</h4>
+                      <ul>
+                        @for (
+                          prep of msg.content.recommendations.preparation_for_doctor;
+                          track prep
+                        ) {
+                          <li>{{ prep }}</li>
+                        }
+                      </ul>
+                    </div>
+                  }
+                </div>
+              }
+
+              @if (msg.content.careOptions?.matched_doctors?.length) {
+                <div class="matched-doctors">
+                  <h4>👨‍⚕️ Recommended Doctors</h4>
+                  <div class="doctor-grid">
+                    @for (
+                      doctor of msg.content.careOptions?.matched_doctors?.slice(0, 3);
+                      track doctor.id
+                    ) {
+                      <div class="doctor-card" (click)="selectDoctor(doctor)">
+                        @if (doctor.imageUrl) {
+                          <img [src]="doctor.imageUrl" [alt]="doctor.name" class="doctor-image" />
+                        } @else {
+                          <div class="doctor-avatar">{{ doctor.name.charAt(0) }}</div>
+                        }
+                        <div class="doctor-info">
+                          <strong>{{ doctor.name }}</strong>
+                          <span>{{ doctor.specialty }}</span>
+                          @if (doctor.department) {
+                            <span class="dept">{{ doctor.department }}</span>
+                          }
+                          @if (doctor.rating) {
+                            <span class="rating">⭐ {{ doctor.rating.toFixed(1) }}</span>
+                          }
+                          @if (doctor.experience) {
+                            <span class="experience">{{ doctor.experience }}</span>
+                          }
+                        </div>
+                      </div>
+                    }
+                  </div>
+                  @if ((msg.content.careOptions?.matched_doctors?.length ?? 0) > 3) {
+                    <button class="view-all-btn" (click)="viewMatchedDoctors()">
+                      View all {{ msg.content.careOptions?.matched_doctors?.length }} doctors
+                    </button>
+                  }
+                </div>
+              }
+
+              @if (msg.content.nextSteps?.length) {
+                <div class="next-steps">
+                  <h4>✨ Next Steps</h4>
+                  <ul>
+                    @for (step of msg.content.nextSteps; track step) {
+                      <li>{{ step }}</li>
+                    }
+                  </ul>
+                </div>
+              }
+            </div>
+          }
+
+          <!-- SINGLE INTENT: APPOINTMENT BOOKING -->
+          @else if (msg.content.type === 'appointment_booking') {
+            <div class="appointment-booking">
+              <p class="message-content">{{ msg.content.text }}</p>
+
+              @if (msg.content.instructions?.length) {
+                <div class="instructions">
+                  <ol>
+                    @for (instruction of msg.content.instructions; track instruction) {
+                      <li>{{ instruction }}</li>
+                    }
+                  </ol>
+                </div>
+              }
+            </div>
+          }
+
+          <!-- DEFAULT: TEXT RESPONSE -->
+          @else {
+            <p class="message-content">{{ msg.content.text }}</p>
           }
         }
       </div>
     } @empty {
       @if (!isTyping()) {
-        <p class="placeholder">Type your symptoms or a question below to get started.</p>
+        <div class="placeholder-state">
+          <div class="placeholder-icon">💬</div>
+          <p class="placeholder-title">How can I help you today?</p>
+          <p class="placeholder-subtitle">
+            Describe your symptoms, book appointments, or get hospital guidance.
+          </p>
+
+          <div class="quick-actions">
+            <button (click)="inputValue.set('I have a fever and headache')">
+              🤒 Report Symptoms
+            </button>
+            <button (click)="inputValue.set('I need to book an appointment')">
+              📅 Book Appointment
+            </button>
+            <button (click)="inputValue.set('Where is the cafeteria?')">
+              🗺️ Hospital Navigation
+            </button>
+          </div>
+        </div>
       }
     }
+
     @if (isTyping()) {
       <div class="message assistant typing animate-msg">
         <span class="message-label">{{ assistantName }}</span>
-        <div class="typing-dots">
-          <span></span><span></span><span></span>
-        </div>
+        <div class="typing-dots"><span></span><span></span><span></span></div>
       </div>
     }
   </div>
+
   <div class="input-row">
     <input
       type="text"
-      placeholder="e.g. I’m having a fever and headache..."
+      placeholder="e.g. I'm having a fever and headache..."
       [value]="inputValue()"
       (input)="onInput($event)"
       (keydown.enter)="send()"
     />
-    <button type="button" class="send-btn" (click)="send()" [disabled]="!inputValue().trim()">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+    <button
+      type="button"
+      class="send-btn"
+      (click)="send()"
+      [disabled]="!inputValue().trim() || isTyping()"
+    >
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+      >
+        <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
+      </svg>
       Send
     </button>
   </div>

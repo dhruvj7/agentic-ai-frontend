@@ -1,24 +1,25 @@
-import { Component, inject, signal, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
+import { 
+  Component, 
+  inject, 
+  signal, 
+  ViewChild, 
+  ElementRef, 
+  AfterViewChecked 
+} from '@angular/core';
 import { Router } from '@angular/router';
-import { Doctor } from '../../models/doctor.model';
+import { ChatApiService, ChatResponse, Doctor } from '../../services/chat-api.service';
+import { ChatMessage, MessageContent } from '../../models/chat-message.model';
 import { DoctorMatchService } from '../../services/doctor-match.service';
-import { MOCK_DOCTORS } from '../../data/mock-doctors';
-
-export interface ChatMessage {
-  role: 'user' | 'assistant';
-  content: string;
-  matchedDoctors?: Doctor[];
-}
 
 @Component({
   selector: 'app-chat-assistant',
-  imports: [],
   templateUrl: './chat-assistant.html',
   styleUrl: './chat-assistant.scss',
 })
 export class ChatAssistant implements AfterViewChecked {
   @ViewChild('messagesContainer') private messagesContainer!: ElementRef<HTMLDivElement>;
 
+  private chatApi = inject(ChatApiService);
   private doctorMatch = inject(DoctorMatchService);
   private router = inject(Router);
 
@@ -26,8 +27,11 @@ export class ChatAssistant implements AfterViewChecked {
   readonly inputValue = signal('');
   readonly isTyping = signal(false);
   readonly assistantName = 'AI Care Navigator';
+  readonly sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
   private scrollToBottom = false;
+  private userAge = 35; // Could come from user profile
+  private userLocation = 'hospital_lobby'; // Could be dynamic
 
   ngAfterViewChecked(): void {
     if (this.scrollToBottom && this.messagesContainer?.nativeElement) {
@@ -46,41 +50,140 @@ export class ChatAssistant implements AfterViewChecked {
     const text = this.inputValue().trim();
     if (!text) return;
 
-    this.messages.update(m => [...m, { role: 'user', content: text }]);
+    // Add user message
+    this.messages.update(m => [...m, {
+      role: 'user',
+      content: { type: 'text', text },
+      timestamp: new Date()
+    }]);
+    
     this.inputValue.set('');
     this.scrollToBottom = true;
     this.isTyping.set(true);
 
-    const lower = text.toLowerCase();
-    const isSymptomLike = ['fever', 'pain', 'headache', 'cough', 'cold', 'symptom', 'feel', 'having', 'hurt', 'ache'].some(w => lower.includes(w));
-
-    setTimeout(() => {
-      this.isTyping.set(false);
-      if (isSymptomLike) {
-        const doctors = MOCK_DOCTORS.slice(0, 3);
-        this.doctorMatch.setMatchedDoctors(doctors);
-        this.messages.update(m => [
-          ...m,
-          {
-            role: 'assistant',
-            content: `Based on what you've shared ("${text}"), we recommend a consultation. Here are some doctors that may be a good fit—you can view their profiles and book an appointment.`,
-            matchedDoctors: doctors,
+    // Call backend API
+    this.chatApi.sendMessage({
+      context: {
+        location: this.userLocation,
+        user_age: this.userAge
+      },
+      message: text,
+      session_id: this.sessionId
+    }).subscribe({
+      next: (response) => {
+        console.log("response--",response)
+        this.handleResponse(response);
+      },
+      error: (error) => {
+        console.error('Chat API error:', error);
+        this.isTyping.set(false);
+        this.messages.update(m => [...m, {
+          role: 'assistant',
+          content: {
+            type: 'text',
+            text: 'Sorry, I encountered an error. Please try again.'
           },
-        ]);
-      } else {
-        this.messages.update(m => [
-          ...m,
-          {
-            role: 'assistant',
-            content: `Thanks for your message. I'm here to help with symptoms, appointments, insurance, or in-hospital guidance. You can describe how you're feeling or ask a question, and I'll guide you to the next steps.`,
-          },
-        ]);
+          timestamp: new Date()
+        }]);
+        this.scrollToBottom = true;
       }
-      this.scrollToBottom = true;
-    }, 700);
+    });
+  }
+
+  private handleResponse(response: ChatResponse): void {
+    this.isTyping.set(false);
+
+    const content: MessageContent = this.parseResponseContent(response);
+    console.log("content--",content)
+    
+    this.messages.update(m => [...m, {
+      role: 'assistant',
+      content,
+      timestamp: new Date(),
+      intent: response.intent
+    }]);
+
+    // Store matched doctors if available
+    if (content.careOptions?.matched_doctors) {
+      this.doctorMatch.setMatchedDoctors(content.careOptions.matched_doctors);
+    }
+
+    this.scrollToBottom = true;
+  }
+
+  private parseResponseContent(response: ChatResponse): MessageContent {
+    const { result, intent } = response;
+
+    // Handle multi-intent responses
+    if (Array.isArray(intent) && result.sub_results) {
+      return {
+        type: 'multi_intent',
+        text: result.message,
+        subResults: result.sub_results.map(sr => ({
+          intent: sr.intent,
+          message: sr.message,
+          analysis: sr.analysis,
+          recommendations: sr.recommendations,
+          careOptions: sr.care_options,
+          bookingFlow: sr.booking_flow,
+          instructions: sr.instructions,
+          nextSteps: sr.next_steps
+        }))
+      };
+    }
+
+    // Handle single intent responses    
+    if (intent === 'symptom_analysis' || result.intent === 'symptom_analysis') {
+      return {
+        type: 'symptom_analysis',
+        text: result.message,
+        analysis: result.analysis,
+        recommendations: result.recommendations,
+        careOptions: result.care_options,
+        nextSteps: result.next_steps
+      };
+    }
+
+    if (intent === 'appointment_booking' || result.intent === 'appointment_booking') {
+      return {
+        type: 'appointment_booking',
+        text: result.message,
+        bookingFlow: result.booking_flow,
+        instructions: result.instructions
+      };
+    }
+
+    // Default text response
+    return {
+      type: 'text',
+      text: result.message
+    };
   }
 
   viewMatchedDoctors(): void {
     this.router.navigate(['/doctors']);
+  }
+
+  selectDoctor(doctor: Doctor): void {
+    this.doctorMatch.setMatchedDoctors([doctor]);
+    this.router.navigate(['/doctors']);
+  }
+
+  expandSection(section: string): void {
+    // Toggle section expansion if needed
+    console.log('Expand section:', section);
+  }
+
+  getSeverityLabel(severity: string): string {
+    const labels: Record<string, string> = {
+      'consult_doctor': '⚠️ Consult Doctor',
+      'emergency': '🚨 Emergency',
+      'monitor': '👁️ Monitor',
+      'self_care': '💚 Self Care',
+      'within_week': '📅 Within Week',
+      'within_days': '⏰ Within Days',
+      'urgent': '⚡ Urgent'
+    };
+    return labels[severity] || severity;
   }
 }
