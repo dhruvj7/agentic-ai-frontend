@@ -10,6 +10,7 @@ import { Router } from '@angular/router';
 import { ChatApiService, ChatResponse, Doctor } from '../../services/chat-api.service';
 import { ChatMessage, MessageContent } from '../../models/chat-message.model';
 import { DoctorMatchService } from '../../services/doctor-match.service';
+import { ChangeDetectorRef } from '@angular/core';
 
 @Component({
   selector: 'app-chat-assistant',
@@ -18,6 +19,29 @@ import { DoctorMatchService } from '../../services/doctor-match.service';
 })
 export class ChatAssistant implements AfterViewChecked {
   @ViewChild('messagesContainer') private messagesContainer!: ElementRef<HTMLDivElement>;
+
+  constructor(private cdr:ChangeDetectorRef) { }
+
+  startNavigation(msg: any) {
+  const steps = msg.content.navigation.route.steps;
+
+  // Reset this message only
+  msg.content.currentStepIndex = 0;
+
+  // Clear existing interval if restarting
+  if (msg.content.navigationInterval) {
+    clearInterval(msg.content.navigationInterval);
+  }
+
+  msg.content.navigationInterval = setInterval(() => {
+    if (msg.content.currentStepIndex < steps.length - 1) {
+      msg.content.currentStepIndex++;
+      this.cdr.detectChanges();
+    } else {
+      clearInterval(msg.content.navigationInterval);
+    }
+  }, 2000);
+}
 
   private chatApi = inject(ChatApiService);
   private doctorMatch = inject(DoctorMatchService);
@@ -150,6 +174,16 @@ export class ChatAssistant implements AfterViewChecked {
         text: result.message,
         bookingFlow: result.booking_flow,
         instructions: result.instructions
+      };
+    }
+
+    if (intent === 'hospital_navigation' || result.intent === 'hospital_navigation') {
+      return {
+        type: 'hospital_navigation',
+        text: result.message,
+        navigation: result.navigation,
+        instructions: result.instructions,
+        currentStepIndex: -1
       };
     }
 

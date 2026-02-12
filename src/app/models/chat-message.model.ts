@@ -4,7 +4,7 @@ export type MessageContentType =
   | 'text' 
   | 'symptom_analysis' 
   | 'appointment_booking' 
-  | 'navigation'
+  | 'hospital_navigation'
   | 'multi_intent';
 
 export interface MessageContent {
@@ -20,6 +20,9 @@ export interface MessageContent {
   // Appointment booking data
   bookingFlow?: BookingFlow;
   instructions?: string[];
+
+  navigation?: any;
+  currentStepIndex?: number;
   
   // Multi-intent
   subResults?: Array<{

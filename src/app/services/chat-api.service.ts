@@ -102,6 +102,7 @@ export interface ChatResponse {
     available_endpoints?: Record<string, string>;
     instructions?: string[];
     intent?: string;
+    navigation?: any
   };
 }
 

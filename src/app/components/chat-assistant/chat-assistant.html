@@ -390,6 +390,91 @@
                 </div>
               }
             </div>
+          } @else if (msg.content.type === 'hospital_navigation') {
+            <div class="hospital-navigation">
+              <p class="message-content">{{ msg.content.text }}</p>
+
+              @if (msg.content.navigation) {
+                <div class="nav-card">
+                  <!-- HEADER -->
+                  <div class="nav-header">
+                    <div>
+                      <div class="nav-title">
+                        {{ msg.content.navigation.current_location?.name }}
+                        →
+                        {{ msg.content.navigation.destination?.name }}
+                      </div>
+
+                      <div class="nav-meta">
+                        📏 {{ msg.content.navigation.route.distance }} ft • ⏱️
+                        {{ msg.content.navigation.route.estimated_time }} sec • ♿
+                        {{
+                          msg.content.navigation.route.accessible ? 'Accessible' : 'Standard Route'
+                        }}
+                      </div>
+                    </div>
+
+                    <button class="start-btn" (click)="startNavigation(msg)">▶ Start</button>
+                  </div>
+
+                  <!-- TIMELINE -->
+                  <div class="timeline">
+                    @for (step of msg.content.navigation.route.steps; track $index) {
+                      <div
+                        class="timeline-step"
+                        [class.active]="$index === msg.content.currentStepIndex"
+                        [class.completed]="$index < (msg?.content?.currentStepIndex ?? -1)"
+                      >
+                        <div class="timeline-icon">
+                          @switch (step.type) {
+                            @case ('walk') {
+                              🚶
+                            }
+                            @case ('elevator') {
+                              🛗
+                            }
+                            @case ('arrival') {
+                              📍
+                            }
+                            @case ('outdoor_walk') {
+                              🌤️
+                            }
+                            @default {
+                              ➡️
+                            }
+                          }
+                        </div>
+
+                        <div class="timeline-content">
+                          <div
+                            class="step-text"
+                            [class.active-text]="$index === msg.content.currentStepIndex"
+                          >
+                            {{ step.instruction }}
+                          </div>
+
+                          @if (step.distance) {
+                            <div class="step-distance">{{ step.distance }} ft</div>
+                          }
+                        </div>
+                      </div>
+                    }
+                  </div>
+
+                  <!-- PROGRESS BAR -->
+                  <div class="progress-wrapper">
+                    <div
+                      class="progress-bar"
+                      [style.width.%]="
+                        (((msg.content.currentStepIndex ?? -1) + 1) /
+                          msg.content.navigation.route.steps.length) *
+                        100
+                      "
+                    ></div>
+                  </div>
+                </div>
+              }
+            </div>
           }
 
           <!-- DEFAULT: TEXT RESPONSE -->
