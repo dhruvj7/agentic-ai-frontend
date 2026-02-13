@@ -49,7 +49,7 @@
                             <h4>📋 Analysis</h4>
                             <p>{{ subResult.analysis.primary_analysis }}</p>
 
-                            @if (subResult.analysis.differential_diagnosis.length) {
+                            @if (subResult?.analysis?.differential_diagnosis?.length) {
                               <div class="diagnosis-list">
                                 <strong>Possible conditions:</strong>
                                 <ul>
@@ -176,7 +176,7 @@
                         <div class="booking-card">
                           <h4>📅 Booking Information</h4>
 
-                          @if (subResult.bookingFlow.next_questions.length) {
+                          @if (subResult?.bookingFlow?.next_questions?.length) {
                             <div class="next-questions">
                               <p><strong>Please provide:</strong></p>
                               <ul>
