@@ -32,8 +32,8 @@ const slots4 = [
 ];
 
 export const MOCK_DOCTORS: Doctor[] = [
-  { id: '1', name: 'Dr. Priya Sharma', specialty: 'General Physician', qualification: 'MBBS, MD', experience: '12 years', rating: 4.9, availableSlots: slots1 },
-  { id: '2', name: 'Dr. Rajesh Kumar', specialty: 'Internal Medicine', qualification: 'MBBS, MD (Internal Medicine)', experience: '15 years', rating: 4.8, availableSlots: slots2 },
-  { id: '3', name: 'Dr. Anjali Mehta', specialty: 'Family Medicine', qualification: 'MBBS, DNB', experience: '8 years', rating: 4.7, availableSlots: slots3 },
-  { id: '4', name: 'Dr. Vikram Singh', specialty: 'General Physician', qualification: 'MBBS, MD', experience: '10 years', rating: 4.9, availableSlots: slots4 },
+  { id: 1, name: 'Dr. Priya Sharma', specialty: 'General Physician', qualification: 'MBBS, MD', experience: '12 years', rating: 4.9, availableSlots: slots1 },
+  { id: 2, name: 'Dr. Rajesh Kumar', specialty: 'Internal Medicine', qualification: 'MBBS, MD (Internal Medicine)', experience: '15 years', rating: 4.8, availableSlots: slots2 },
+  { id: 3, name: 'Dr. Anjali Mehta', specialty: 'Family Medicine', qualification: 'MBBS, DNB', experience: '8 years', rating: 4.7, availableSlots: slots3 },
+  { id: 4, name: 'Dr. Vikram Singh', specialty: 'General Physician', qualification: 'MBBS, MD', experience: '10 years', rating: 4.9, availableSlots: slots4 },
 ];

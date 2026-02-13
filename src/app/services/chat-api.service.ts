@@ -19,7 +19,7 @@ export interface ChatRequest {
 }
 
 export interface Doctor {
-  id: string;
+  id: number;
   name: string;
   email: string;
   specialty: string;

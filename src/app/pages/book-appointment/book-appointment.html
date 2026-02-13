@@ -1,71 +1,92 @@
-<div class="book-page">
-  @if (doctor(); as d) {
-    <div class="book-header">
-      <a class="back" routerLink="/doctors">← Back to doctors</a>
-      <h1>Book appointment</h1>
-      <div class="doctor-summary">
-        <span class="doctor-name">{{ d.name }}</span>
-        <span class="doctor-specialty">{{ d.specialty }}</span>
+<div class="booking-container">
+  <a routerLink="/doctors" class="back-link">← Back to doctors</a>
+
+  @if (appointmentDetails(); as data) {
+    <div class="content-grid">
+      <div class="summary-card">
+        <h2>Booking Summary</h2>
+        <div class="doctor-preview">
+          <div class="avatar">{{ getInitials(data.doctor.name) }}</div>
+          <div>
+            <h3>{{ data.doctor.name }}</h3>
+            <p class="specialty">{{ data.doctor.specialty }}</p>
+          </div>
+        </div>
+        
+        <div class="details-list">
+          <div class="detail-item">
+            <span class="label">Date</span>
+            <span class="value">{{ data.slot.slot_date }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Time</span>
+            <span class="value highlight">{{ data.slot.slot_time }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Rating</span>
+            <span class="value">★ {{ data.doctor.rating || 'N/A' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <h2>Patient Details</h2>
+        <form [formGroup]="bookingForm" (ngSubmit)="onSubmit()">
+          <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" formControlName="patientName" placeholder="Enter your name">
+          </div>
+
+          <div class="form-group">
+            <label>Mobile Number</label>
+            <input type="tel" formControlName="mobileNumber" placeholder="10-digit number">
+          </div>
+
+          <div class="form-group">
+            <label>Email Address</label>
+            <input type="email" formControlName="email" placeholder="email@example.com">
+          </div>
+
+          <button type="submit" class="btn-confirm" [disabled]="isSubmitting()">
+            {{ isSubmitting() ? 'Processing...' : 'Confirm Appointment' }}
+          </button>
+        </form>
       </div>
     </div>
-    @if (!submitted()) {
-      <form class="book-form" [formGroup]="form" (ngSubmit)="onSubmit()">
-        <label>
-          <span>Your name <em>*</em></span>
-          <input type="text" formControlName="name" placeholder="Full name" />
-          @if (hasError('name', 'required')) {
-            <span class="error">Name is required.</span>
-          }
-          @if (hasError('name', 'minlength')) {
-            <span class="error">Name must be at least 2 characters.</span>
-          }
-        </label>
-        <label>
-          <span>Email <em>*</em></span>
-          <input type="email" formControlName="email" placeholder="you@example.com" />
-          @if (hasError('email', 'required')) {
-            <span class="error">Email is required.</span>
-          }
-          @if (hasError('email', 'email')) {
-            <span class="error">Please enter a valid email address.</span>
-          }
-        </label>
-        <label>
-          <span>Available slot <em>*</em></span>
-          <select formControlName="slot">
-            <option value="">Select a slot</option>
-            @for (slot of availableSlots(); track slot) {
-              <option [value]="slot">{{ slot }}</option>
-            }
-          </select>
-          @if (hasError('slot', 'required')) {
-            <span class="error">Please select an available slot.</span>
-          }
-          @if (availableSlots().length === 0) {
-            <span class="hint">No slots available for this doctor at the moment.</span>
-          }
-        </label>
-        <label>
-          <span>Brief reason for visit</span>
-          <input type="text" formControlName="reason" placeholder="e.g. Follow-up for fever" />
-          @if (hasError('reason', 'maxlength')) {
-            <span class="error">Reason must be 500 characters or less.</span>
-          }
-        </label>
-        <button type="submit" class="btn-submit" [disabled]="form.invalid || availableSlots().length === 0">Confirm appointment</button>
-      </form>
-    } @else {
-      <div class="success">
-        <span class="success-icon">✓</span>
-        <h2>Appointment requested</h2>
-        <p>We've received your request for <strong>{{ form.get('slot')?.value }}</strong> with {{ d.name }}. You'll receive a confirmation email at {{ form.get('email')?.value }}.</p>
-        <a routerLink="/" class="btn-home">Back to home</a>
-      </div>
-    }
   } @else {
-    <div class="not-found">
-      <p>Doctor not found.</p>
-      <a routerLink="/doctors">View doctors</a>
+    <div class="loading-state">
+      <p>Finding appointment details...</p>
     </div>
   }
+
+  @if (showSuccess()) {
+  <div class="success-overlay">
+    <div class="success-card">
+      <div class="icon-container">
+        <div class="check">✓</div>
+        <div class="confetti"></div>
+      </div>
+      
+      <h2>Booking Confirmed!</h2>
+      
+      <div class="confirmation-details">
+        <p class="main-msg">Journey Step Completed Successfully.</p>
+        
+        <div class="email-badge">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+          <span>Confirmation email sent to <strong>{{ bookingForm.get('email')?.value }}</strong></span>
+        </div>
+
+        <p class="navigator-note">
+          Your <strong>Digital Care Navigator</strong> is now tracking this journey. 
+          Expect a reminder 2 hours before your appointment.
+        </p>
+      </div>
+
+      <div class="auto-redirect">
+        Redirecting to dashboard...
+      </div>
+    </div>
+  </div>
+}
 </div>

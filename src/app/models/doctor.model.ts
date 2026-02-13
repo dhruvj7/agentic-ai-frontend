@@ -1,5 +1,5 @@
 export interface Doctor {
-  id: string;
+  id: number;
   name: string;
   email?: string;
   specialty?: string;
@@ -8,5 +8,11 @@ export interface Doctor {
   experience?: string;
   rating?: number;
   imageUrl?: string;
+  slots?:Slot[]
   availableSlots?: string[];
+}
+interface Slot{
+  id:number
+  slot_time:string,
+  slot_date:string
 }

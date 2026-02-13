@@ -1,11 +1,13 @@
 .doctors-page {
-  max-width: 900px;
+  max-width: 1000px;
   margin: 0 auto;
-  padding: 2rem 1.5rem;
+  padding: 2.5rem 1.5rem;
 }
 
+/* ================= HEADER ================= */
+
 .doctors-header {
-  margin-bottom: 2rem;
+  margin-bottom: 2.5rem;
 
   .back {
     display: inline-block;
@@ -13,16 +15,16 @@
     color: var(--color-primary);
     text-decoration: none;
     font-weight: 500;
-    font-size: 0.9375rem;
+    font-size: 0.9rem;
 
     &:hover {
-      text-decoration: underline;
+      opacity: 0.8;
     }
   }
 
   h1 {
-    margin: 0 0 0.25rem;
-    font-size: 1.75rem;
+    margin: 0 0 0.35rem;
+    font-size: 1.9rem;
     font-weight: 700;
     color: var(--color-text);
   }
@@ -34,34 +36,38 @@
   }
 }
 
+/* ================= GRID ================= */
+
 .doctors-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 2rem;
 }
+
+/* ================= CARD ================= */
 
 .doctor-card {
   background: var(--color-surface-elevated);
-  border-radius: var(--radius-lg);
+  border-radius: 18px;
   border: 1px solid var(--color-border);
   box-shadow: var(--shadow-sm);
-  overflow: hidden;
   display: flex;
   flex-direction: column;
-  transition: transform 0.25s var(--ease-spring), box-shadow 0.25s;
+  transition: all 0.25s ease;
 
   &:hover {
-    transform: translateY(-2px);
+    transform: translateY(-4px);
     box-shadow: var(--shadow-md);
   }
 
   .card-body {
-    padding: 1.5rem;
+    padding: 1.75rem;
   }
 
+  /* Avatar */
   .avatar {
-    width: 56px;
-    height: 56px;
+    width: 60px;
+    height: 60px;
     border-radius: 50%;
     background: linear-gradient(135deg, var(--color-primary), #0891b2);
     color: var(--color-bg);
@@ -69,93 +75,135 @@
     align-items: center;
     justify-content: center;
     font-weight: 700;
-    font-size: 1.25rem;
+    font-size: 1.3rem;
     margin-bottom: 1rem;
   }
 
   h3 {
-    margin: 0 0 0.25rem;
-    font-size: 1.125rem;
+    margin: 0 0 0.35rem;
+    font-size: 1.15rem;
     font-weight: 600;
     color: var(--color-text);
   }
 
   .specialty {
-    margin: 0 0 0.25rem;
-    font-size: 0.875rem;
+    margin: 0 0 0.35rem;
+    font-size: 0.85rem;
     font-weight: 600;
     color: var(--color-primary);
   }
 
   .qualification,
   .experience {
-    margin: 0 0 0.15rem;
-    font-size: 0.8125rem;
+    margin: 0 0 0.2rem;
+    font-size: 0.8rem;
     color: var(--color-text-muted);
   }
 
   .rating {
     margin-top: 0.75rem;
-    font-size: 0.9375rem;
+    font-size: 0.9rem;
     font-weight: 600;
     color: var(--color-text);
   }
 
+  /* ================= SLOTS SECTION ================= */
+
   .slots {
-    margin-top: 1rem;
-    padding-top: 0.75rem;
+    margin-top: 1.5rem;
+    padding-top: 1.2rem;
     border-top: 1px solid var(--color-border);
-
-    .slots-label {
-      display: block;
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: var(--color-text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      margin-bottom: 0.5rem;
-    }
   }
 
-  .slot-chips {
+  .slots-header {
     display: flex;
-    flex-wrap: wrap;
-    gap: 0.35rem;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-text-muted);
+    margin-bottom: 0.9rem;
   }
 
-  .slot-chip {
-    display: inline-block;
-    padding: 0.25rem 0.5rem;
-    font-size: 0.75rem;
+  .slot-count {
+    background: rgba(6, 182, 212, 0.12);
     color: var(--color-primary);
-    background: var(--color-primary-muted);
-    border-radius: 6px;
-    border: 1px solid rgba(6, 182, 212, 0.3);
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.7rem;
   }
+
+  .date-group {
+    margin-bottom: 1rem;
+  }
+
+  .date-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--color-text);
+  }
+
+  .time-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
+    gap: 0.6rem;
+  }
+
+  .time-pill {
+    padding: 0.55rem 0.6rem;
+    border-radius: 12px;
+    border: 1px solid var(--color-border);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--color-text);
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .time-pill:hover {
+    border-color: var(--color-primary);
+    transform: translateY(-2px);
+  }
+
+  .time-pill.selected {
+    background: var(--color-primary);
+    color: white;
+    border-color: var(--color-primary);
+    box-shadow: 0 6px 16px rgba(6, 182, 212, 0.35);
+  }
+
+  /* ================= BOOK BUTTON ================= */
 
   .btn-book {
-    display: block;
-    margin: 0 1.5rem 1.5rem;
-    padding: 0.75rem 1rem;
+    margin: 0 1.75rem 1.75rem;
+    padding: 0.85rem 1rem;
     background: var(--color-primary);
     color: var(--color-bg);
     text-align: center;
     font-weight: 600;
-    font-size: 0.9375rem;
-    text-decoration: none;
-    border-radius: 10px;
-    transition: background 0.2s;
+    font-size: 0.95rem;
+    border-radius: 14px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
 
-    &:hover {
-      background: var(--color-primary-hover);
-    }
+  .btn-book:hover {
+    background: var(--color-primary-hover);
+    transform: translateY(-2px);
   }
 }
+
+/* ================= EMPTY STATE ================= */
 
 .empty {
   text-align: center;
   color: var(--color-text-muted);
-  margin: 2rem 0 0.5rem;
+  margin: 3rem 0 0.75rem;
 }
 
 .link-chat {
@@ -166,6 +214,6 @@
   text-decoration: none;
 
   &:hover {
-    text-decoration: underline;
+    opacity: 0.85;
   }
 }

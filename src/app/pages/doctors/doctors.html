@@ -14,16 +14,42 @@
           <p class="qualification">{{ doctor.qualification }}</p>
           <p class="experience">{{ doctor.experience }} experience</p>
           <div class="rating">★ {{ doctor.rating }}</div>
-          @if (doctor.availableSlots && doctor.availableSlots.length) {
-            <div class="slots">
-              <span class="slots-label">Available slots:</span>
-              <div class="slot-chips">
-                @for (slot of doctor.availableSlots; track slot) {
-                  <span class="slot-chip">{{ slot }}</span>
-                }
-              </div>
-            </div>
+       
+        
+@if (doctor.slots && doctor.slots.length) {
+  <div class="slots">
+    <div class="slots-header">
+      <span>Available Appointments</span>
+      <span class="slot-count">
+        {{ doctor.slots.length }} slots
+      </span>
+    </div>
+
+    @for (group of groupSlotsByDate(doctor.slots); track group.date) {
+      <div class="date-group">
+        <div class="date-label">
+          {{ group.date }}
+        </div>
+
+        <div class="time-grid">
+          @for (slot of group.slots; track slot.id) {
+            <button
+              type="button"
+              class="time-pill"
+              [class.selected]="selectedSlotId() === slot.id"
+              (click)="selectSlot(doctor.id, slot.id)"
+            >
+              {{ slot.slot_time }}
+            </button>
           }
+        </div>
+      </div>
+    }
+  </div>
+}
+
+
+
         </div>
         <a [routerLink]="['/book-appointment', doctor.id]" class="btn-book">Book appointment</a>
       </article>
