@@ -51,7 +51,17 @@
 
 
         </div>
-        <a [routerLink]="['/book-appointment', doctor.id]" class="btn-book">Book appointment</a>
+        <!-- <a [routerLink]="['/book-appointment', doctor.id]" class="btn-book">Book appointment</a> -->
+
+        <div class="card-footer">
+  <button 
+    type="button" 
+    class="btn-book" 
+    [disabled]="selectedDoctorId() !== doctor.id || !selectedSlotId()"
+    (click)="bookAppointment(doctor.id)">
+    Book appointment
+  </button>
+</div>
       </article>
     }
   </div>

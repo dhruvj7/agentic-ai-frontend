@@ -68,7 +68,7 @@ export class BookAppointment implements OnInit {
     Slot Details: ID ${details.slot.id}, Date ${details.slot.slot_date}, Time ${details.slot.slot_time}.
     Patient Details:
     - Name: ${this.bookingForm.value.patientName}
-    - Mobile: ${this.bookingForm.value.mobileNumber}
+    - Phone: ${this.bookingForm.value.mobileNumber}
     - Email: ${this.bookingForm.value.email}
     - Notes: ${this.bookingForm.value.notes || 'None'}`;
 
@@ -88,7 +88,7 @@ export class BookAppointment implements OnInit {
         this.showSuccess.set(true);
         
 
-        setTimeout(() => this.router.navigate(['/']), 3000);
+        // setTimeout(() => this.router.navigate(['/']), 3000);
       },
       error: (err) => {
         console.error('Booking failed:', err);

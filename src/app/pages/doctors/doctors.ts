@@ -45,17 +45,22 @@ groupSlotsByDate(slots: any[]) {
   }));
 }
 
-  bookAppointment(doctorId: string) {
-    if (!this.selectedSlotId()) {
-      alert('Please select a slot first');
-      return;
-    }
-
-    this.router.navigate(['/book-appointment', doctorId], {
-      queryParams: { slotId: this.selectedSlotId() , doctorId : this.selectedDoctorId()}
-    });
+ bookAppointment(doctorId: number) {
+  const slotId = this.selectedSlotId();
+  
+  if (!slotId || this.selectedDoctorId() !== doctorId) {
+    alert('Please select an available time slot first.');
+    return;
   }
 
+  // Navigate to /book-appointment/16?slotId=121
+  this.router.navigate(['/book-appointment', doctorId], {
+    queryParams: { 
+      slotId: slotId,
+      doctorId: doctorId // Passing both ensures your booking page has easy access
+    }
+  });
+}
   getInitials(name: string): string {
     return name
       .split(' ')
