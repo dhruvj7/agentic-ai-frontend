@@ -5,7 +5,8 @@ export type MessageContentType =
   | 'symptom_analysis' 
   | 'appointment_booking' 
   | 'hospital_navigation'
-  | 'multi_intent';
+  | 'multi_intent'
+  | 'doctor_list';
 
 export interface MessageContent {
   type: MessageContentType;

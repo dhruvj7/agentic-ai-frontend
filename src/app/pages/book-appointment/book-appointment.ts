@@ -23,6 +23,7 @@ export class BookAppointment implements OnInit {
   isSubmitting = signal(false);
   showSuccess = signal(false);
   appointmentDetails = signal<{doctor: Doctor, slot: any} | null>(null);
+  errorMessage = signal<string | null>(null);
 
   bookingForm: FormGroup = this.fb.group({
     patientName: ['', [Validators.required, Validators.minLength(2)]],
@@ -55,8 +56,25 @@ export class BookAppointment implements OnInit {
   }
 
   onSubmit() {
+    // Clear any previous error messages
+    this.errorMessage.set(null);
+    
     if (this.bookingForm.invalid || !this.appointmentDetails()) {
       this.bookingForm.markAllAsTouched();
+      
+      // Show specific error message if mobile number is invalid
+      if (this.bookingForm.get('mobileNumber')?.invalid) {
+        if (this.bookingForm.get('mobileNumber')?.errors?.['required']) {
+          this.errorMessage.set('Please enter your mobile number');
+        } else if (this.bookingForm.get('mobileNumber')?.errors?.['pattern']) {
+          this.errorMessage.set('Please enter a valid 10-digit mobile number');
+        }
+      } else if (this.bookingForm.get('patientName')?.invalid) {
+        this.errorMessage.set('Please enter your full name');
+      } else if (this.bookingForm.get('email')?.invalid) {
+        this.errorMessage.set('Please enter a valid email address');
+      }
+      
       return;
     }
 
@@ -88,17 +106,43 @@ export class BookAppointment implements OnInit {
         this.showSuccess.set(true);
         
 
-        // setTimeout(() => this.router.navigate(['/']), 3000);
+        setTimeout(() => this.router.navigate(['/']), 3000);
       },
       error: (err) => {
         console.error('Booking failed:', err);
         this.isSubmitting.set(false);
-        alert('There was an error booking your appointment. Please try again.');
+        
+        // Extract error message from API response if available
+        let errorMsg = 'There was an error booking your appointment. Please try again.';
+        if (err.error?.message) {
+          errorMsg = err.error.message;
+        } else if (err.error?.detail) {
+          errorMsg = err.error.detail;
+        } else if (err.message) {
+          errorMsg = err.message;
+        }
+        
+        this.errorMessage.set(errorMsg);
+        
+        // Scroll to error message
+        setTimeout(() => {
+          const errorElement = document.querySelector('.form-error-message');
+          if (errorElement) {
+            errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 100);
       }
     });
   }
 
   getInitials(name: string): string {
     return name ? name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'DR';
+  }
+
+  // Helper method to clear error message when user starts typing
+  onFieldChange() {
+    if (this.errorMessage()) {
+      this.errorMessage.set(null);
+    }
   }
 }

@@ -7,9 +7,10 @@ import {
   AfterViewChecked 
 } from '@angular/core';
 import { Router } from '@angular/router';
-import { ChatApiService, ChatResponse, Doctor } from '../../services/chat-api.service';
+import { ChatApiService, ChatResponse, Doctor as ApiDoctor } from '../../services/chat-api.service';
 import { ChatMessage, MessageContent } from '../../models/chat-message.model';
 import { DoctorMatchService } from '../../services/doctor-match.service';
+import { Doctor } from '../../models/doctor.model';
 import { ChangeDetectorRef } from '@angular/core';
 
 @Component({
@@ -135,6 +136,46 @@ export class ChatAssistant implements AfterViewChecked {
     this.scrollToBottom = true;
   }
 
+  /**
+   * Transform API doctor format to frontend format
+   * Maps available_slots to slots and normalizes slot structure
+   */
+  private transformDoctors(doctors: any[]): Doctor[] {
+    if (!Array.isArray(doctors)) return [];
+    
+    return doctors.map(doctor => {
+      const transformed: Doctor = {
+        id: doctor.id,
+        name: doctor.name,
+        email: doctor.email,
+        specialty: doctor.specialty,
+        department: doctor.department,
+        qualification: doctor.qualification,
+        experience: doctor.experience,
+        rating: doctor.rating,
+        imageUrl: doctor.imageUrl || doctor.image_url,
+      };
+
+      // Map available_slots to slots
+      if (doctor.available_slots && Array.isArray(doctor.available_slots)) {
+        transformed.slots = doctor.available_slots.map((slot: any) => ({
+          id: slot.id,
+          slot_date: slot.slot_date,
+          slot_time: slot.slot_time,
+        }));
+      } else if (doctor.slots && Array.isArray(doctor.slots)) {
+        // Already in correct format
+        transformed.slots = doctor.slots.map((slot: any) => ({
+          id: slot.id,
+          slot_date: slot.slot_date,
+          slot_time: slot.slot_time,
+        }));
+      }
+
+      return transformed;
+    });
+  }
+
   private parseResponseContent(response: ChatResponse): MessageContent {
     const { result, intent } = response;
 
@@ -143,27 +184,43 @@ export class ChatAssistant implements AfterViewChecked {
       return {
         type: 'multi_intent',
         text: result.message,
-        subResults: result.sub_results.map(sr => ({
-          intent: sr.intent,
-          message: sr.message,
-          analysis: sr.analysis,
-          recommendations: sr.recommendations,
-          careOptions: sr.care_options,
-          bookingFlow: sr.booking_flow,
-          instructions: sr.instructions,
-          nextSteps: sr.next_steps
-        }))
+        subResults: result.sub_results.map(sr => {
+          const transformedCareOptions = sr.care_options?.matched_doctors
+            ? {
+                ...sr.care_options,
+                matched_doctors: this.transformDoctors(sr.care_options.matched_doctors) as any
+              }
+            : sr.care_options;
+          
+          return {
+            intent: sr.intent,
+            message: sr.message,
+            analysis: sr.analysis,
+            recommendations: sr.recommendations,
+            careOptions: transformedCareOptions,
+            bookingFlow: sr.booking_flow,
+            instructions: sr.instructions,
+            nextSteps: sr.next_steps
+          };
+        })
       };
     }
 
     // Handle single intent responses    
     if (intent === 'symptom_analysis' || result.intent === 'symptom_analysis') {
+      const transformedCareOptions = result.care_options?.matched_doctors
+        ? {
+            ...result.care_options,
+            matched_doctors: this.transformDoctors(result.care_options.matched_doctors) as any
+          }
+        : result.care_options;
+      
       return {
         type: 'symptom_analysis',
         text: result.message,
         analysis: result.analysis,
         recommendations: result.recommendations,
-        careOptions: result.care_options,
+        careOptions: transformedCareOptions,
         nextSteps: result.next_steps
       };
     }
@@ -187,6 +244,50 @@ export class ChatAssistant implements AfterViewChecked {
       };
     }
 
+    // Doctor suggestion / list doctors – use clean card UI instead of raw markdown message
+    const isDoctorSuggestionIntent =
+      intent === 'doctor_suggestion' ||
+      result.intent === 'doctor_suggestion' ||
+      (Array.isArray(intent) && intent.includes('doctor_suggestion'));
+    const doctorsFromResult = result['doctors'] ?? result.care_options?.matched_doctors;
+    const hasDoctors = Array.isArray(doctorsFromResult) && doctorsFromResult.length > 0;
+
+    if ((isDoctorSuggestionIntent || (hasDoctors && !result.analysis && !result.sub_results))) {
+      const rawDoctors = doctorsFromResult ?? [];
+      const matchedDoctors = this.transformDoctors(rawDoctors);
+      const specialty = result['specialty'] as string | undefined;
+      const cleanIntro = specialty
+        ? `Here are ${matchedDoctors.length} ${specialty} doctor${matchedDoctors.length === 1 ? '' : 's'} we found.`
+        : `Here are the ${matchedDoctors.length} doctor${matchedDoctors.length === 1 ? '' : 's'} you asked for.`;
+      return {
+        type: 'doctor_list',
+        text: cleanIntro,
+        careOptions: {
+          matched_doctors: matchedDoctors as any,
+          suggested_specialties: specialty ? [specialty] : []
+        }
+      };
+    }
+
+    // Legacy: list_doctors / doctor_list with care_options
+    const listDoctorsIntent =
+      intent === 'list_doctors' ||
+      intent === 'doctor_list' ||
+      result.intent === 'list_doctors' ||
+      result.intent === 'doctor_list';
+    const hasMatchedDoctors = result.care_options?.matched_doctors?.length;
+    if (listDoctorsIntent && hasMatchedDoctors && result.care_options) {
+      const transformedDoctors = this.transformDoctors(result.care_options.matched_doctors);
+      return {
+        type: 'doctor_list',
+        text: result.message,
+        careOptions: {
+          matched_doctors: transformedDoctors as any,
+          suggested_specialties: result.care_options.suggested_specialties || []
+        }
+      };
+    }
+
     // Default text response
     return {
       type: 'text',
@@ -198,7 +299,7 @@ export class ChatAssistant implements AfterViewChecked {
     this.router.navigate(['/doctors']);
   }
 
-  selectDoctor(doctor: Doctor): void {
+  selectDoctor(doctor: Doctor | ApiDoctor): void {
     this.doctorMatch.setMatchedDoctors([doctor]);
     this.router.navigate(['/doctors']);
   }

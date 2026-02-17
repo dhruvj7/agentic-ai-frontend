@@ -328,6 +328,51 @@
   }
 }
 
+// Doctor list response – "Here are the options of the doctors you asked for"
+.doctor-list-response {
+  margin-top: 0.5rem;
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.doctor-list-header {
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--color-border);
+
+  .doctor-list-icon {
+    font-size: 1.5rem;
+    display: inline-block;
+    margin-bottom: 0.5rem;
+  }
+
+  .doctor-list-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-text);
+    margin: 0 0 0.5rem 0;
+    line-height: 1.4;
+  }
+
+  .doctor-list-intro {
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+    margin: 0;
+    line-height: 1.5;
+  }
+}
+
+.doctor-list-cards {
+  margin-top: 0;
+
+  .doctor-grid {
+    margin-bottom: 1rem;
+  }
+}
+
 // Matched Doctors
 .matched-doctors {
   margin-top: 1rem;

@@ -390,6 +390,60 @@
                 </div>
               }
             </div>
+          } @else if (msg.content.type === 'doctor_list') {
+            <div class="doctor-list-response">
+              <div class="doctor-list-header">
+                <span class="doctor-list-icon">👨‍⚕️</span>
+                <h4 class="doctor-list-title">Here are the options of the doctors you asked for</h4>
+                @if (msg.content.text) {
+                  <p class="doctor-list-intro">{{ msg.content.text }}</p>
+                }
+              </div>
+              @if (msg.content.careOptions?.matched_doctors?.length) {
+                <div class="matched-doctors doctor-list-cards">
+                  <div class="doctor-grid">
+                    @for (
+                      doctor of (msg.content.careOptions?.matched_doctors ?? []).slice(0, 6);
+                      track doctor.id
+                    ) {
+                      <div class="doctor-card" (click)="selectDoctor(doctor)">
+                        @if (doctor.imageUrl) {
+                          <img
+                            [src]="doctor.imageUrl"
+                            [alt]="doctor.name"
+                            class="doctor-image"
+                          />
+                        } @else {
+                          <div class="doctor-avatar">{{ doctor.name.charAt(0) }}</div>
+                        }
+                        <div class="doctor-info">
+                          <strong>{{ doctor.name }}</strong>
+                          <span>{{ doctor.specialty }}</span>
+                          @if (doctor.department) {
+                            <span class="dept">{{ doctor.department }}</span>
+                          }
+                          @if (doctor.rating != null) {
+                            <span class="rating">⭐ {{ doctor.rating.toFixed(1) }}</span>
+                          }
+                          @if (doctor.experience) {
+                            <span class="experience">{{ doctor.experience }}</span>
+                          }
+                        </div>
+                      </div>
+                    }
+                  </div>
+                  @if ((msg.content.careOptions?.matched_doctors?.length ?? 0) > 6) {
+                    <button class="view-all-btn" (click)="viewMatchedDoctors()">
+                      View all {{ msg.content.careOptions?.matched_doctors?.length ?? 0 }} doctors
+                    </button>
+                  } @else {
+                    <button class="cta-doctors" (click)="viewMatchedDoctors()">
+                      View details & book appointment
+                    </button>
+                  }
+                </div>
+              }
+            </div>
           } @else if (msg.content.type === 'hospital_navigation') {
             <div class="hospital-navigation">
               <p class="message-content">{{ msg.content.text }}</p>
