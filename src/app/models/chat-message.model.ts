@@ -7,7 +7,8 @@ export type MessageContentType =
   | 'hospital_navigation'
   | 'multi_intent'
   | 'insurance_validation'
-  | 'insurance_verification_result';
+  | 'insurance_verification_result'
+  | 'doctor_list';
 
 export interface InsuranceVerificationResult {
   verification_status: string;

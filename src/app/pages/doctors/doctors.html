@@ -36,8 +36,8 @@
             <button
               type="button"
               class="time-pill"
-              [class.selected]="selectedSlotId() === slot.id"
-              (click)="selectSlot(doctor.id, slot.id)"
+              [class.selected]="selectedSlotId() === +slot.id"
+              (click)="selectSlot(+doctor.id, +slot.id)"
             >
               {{ slot.slot_time }}
             </button>
@@ -58,7 +58,7 @@
     type="button" 
     class="btn-book" 
     [disabled]="selectedDoctorId() !== doctor.id || !selectedSlotId()"
-    (click)="bookAppointment(doctor.id)">
+    (click)="bookAppointment(+doctor.id)">
     Book appointment
   </button>
 </div>

@@ -153,17 +153,6 @@
                                   @if (doctor.experience) {
                                     <span class="experience">{{ doctor.experience }}</span>
                                   }
-                                  @if (doctor.slots?.length) {
-                                    <div class="doctor-slots">
-                                      <span class="slots-label">Available:</span>
-                                      @for (slot of doctor.slots; track slot.id) {
-                                        <span class="slot-tag">{{ formatSlotDisplay(slot) }}</span>
-                                      }
-                                      <!-- @if (doctor.slots?.length > 4) {
-                                        <span class="slot-more">+{{ doctor.slots.length - 4 }} more</span>
-                                      } -->
-                                    </div>
-                                  }
                                 </div>
                               </div>
                             }
@@ -454,17 +443,6 @@
                           }
                           @if (doctor.experience) {
                             <span class="experience">{{ doctor.experience }}</span>
-                          }
-                          @if (doctor.slots?.length) {
-                            <div class="doctor-slots">
-                              <span class="slots-label">Available:</span>
-                              @for (slot of doctor.slots; track slot.id) {
-                                <span class="slot-tag">{{ formatSlotDisplay(slot) }}</span>
-                              }
-                              <!-- @if (doctor.slots.length > 4) {
-                                <span class="slot-more">+{{ doctor.slots.length - 4 }} more</span>
-                              } -->
-                            </div>
                           }
                         </div>
                       </div>

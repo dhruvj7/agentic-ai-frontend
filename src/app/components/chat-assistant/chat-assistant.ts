@@ -9,11 +9,12 @@ import {
   effect
 } from '@angular/core';
 import { Router } from '@angular/router';
-import { ChatApiService, ChatResponse, Doctor as ApiDoctor } from '../../services/chat-api.service';
+import { ChatApiService, ChatResponse } from '../../services/chat-api.service';
 import { ChatMessage, MessageContent } from '../../models/chat-message.model';
 import { DoctorMatchService } from '../../services/doctor-match.service';
 import { ChatStateService } from '../../services/chat-state.service';
 import { ChangeDetectorRef } from '@angular/core';
+import { Doctor } from '../../models/doctor.model';
 
 @Component({
   selector: 'app-chat-assistant',
@@ -156,9 +157,12 @@ export class ChatAssistant implements OnInit, AfterViewChecked {
       intent: response.intent
     }]);
 
-    // Store matched doctors if available
+    // Store matched doctors if available (normalize to app Doctor model)
     if (content.careOptions?.matched_doctors) {
-      this.doctorMatch.setMatchedDoctors(content?.careOptions?.matched_doctors);
+      const normalized = this.transformDoctors(content.careOptions.matched_doctors as any);
+      if (normalized.length) {
+        this.doctorMatch.setMatchedDoctors(normalized);
+      }
     }
 
     this.scrollToBottom = true;
@@ -221,13 +225,26 @@ export class ChatAssistant implements OnInit, AfterViewChecked {
     // Handle multi-intent responses
     if (Array.isArray(intent) && result.sub_results) {
       const subResults = result.sub_results.map(sr => {
-        const insurance = resolveInsuranceHint({ intent: sr.intent, resultIntent: sr.intent, available_endpoints: sr.available_endpoints });
+        const insurance = resolveInsuranceHint({
+          intent: sr.intent,
+          resultIntent: sr.intent,
+          available_endpoints: sr.available_endpoints
+        });
+
+        const transformedCareOptions = sr.care_options?.matched_doctors
+          ? {
+              ...sr.care_options,
+              // Ensure doctors in chat UI always have `slots` populated from `available_slots`
+              matched_doctors: this.transformDoctors(sr.care_options.matched_doctors) as any
+            }
+          : sr.care_options;
+
         return {
           intent: sr.intent,
           message: sr.message,
           analysis: sr.analysis,
           recommendations: sr.recommendations,
-          careOptions: sr.care_options,
+          careOptions: transformedCareOptions,
           bookingFlow: sr.booking_flow,
           instructions: sr.instructions,
           nextSteps: sr.next_steps,
@@ -344,8 +361,11 @@ export class ChatAssistant implements OnInit, AfterViewChecked {
     }
   }
 
-  selectDoctor(doctor: Doctor): void {
-    this.doctorMatch.setMatchedDoctors([doctor]);
+  selectDoctor(doctor: any): void {
+    const [normalized] = this.transformDoctors([doctor]);
+    if (normalized) {
+      this.doctorMatch.setMatchedDoctors([normalized]);
+    }
     this.router.navigate(['/doctors']);
   }
 
