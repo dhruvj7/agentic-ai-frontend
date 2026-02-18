@@ -193,11 +193,13 @@
                           @if (subResult.instructions) {
                             <div class="booking-steps">
                               <p><strong>Booking Steps:</strong></p>
-                              <ol>
-                                @for (instruction of subResult.instructions; track instruction) {
-                                  <li>{{ instruction }}</li>
-                                }
-                              </ol>
+                              <!-- <ul> -->
+                              @for (instruction of subResult.instructions; track instruction) {
+                                <div>
+                                  {{ instruction }}
+                                </div>
+                              }
+                              <!-- </ul> -->
                             </div>
                           }
 
@@ -476,11 +478,9 @@
 
               @if (msg.content.instructions) {
                 <div class="instructions">
-                  <ol>
-                    @for (instruction of msg.content.instructions; track instruction) {
-                      <li>{{ instruction }}</li>
-                    }
-                  </ol>
+                  @for (instruction of msg.content.instructions; track instruction) {
+                    <div>{{ instruction }}</div>
+                  }
                 </div>
               }
             </div>
