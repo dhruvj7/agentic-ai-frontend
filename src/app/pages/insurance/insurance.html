@@ -1,0 +1,147 @@
+<div class="insurance-page">
+  <div class="insurance-hero">
+    <a class="back-link" routerLink="/">←  Back to home</a>
+    <div class="hero-content">
+      <div class="hero-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+      </div>
+      <h1>Insurance Verification</h1>
+      <p>Enter your insurance details to validate coverage and streamline your care experience.</p>
+    </div>
+  </div>
+
+  @if (!submitted()) {
+    <div class="insurance-card">
+      <div class="card-header">
+        <h2>Policy Information</h2>
+        <span class="badge">Secure</span>
+      </div>
+
+      @if (error()) {
+        <div class="error-banner">
+          <span class="error-icon">⚠</span>
+          <div>
+            <strong>{{ error() }}</strong>
+            @if (nextSteps().length) {
+              <ul class="error-next-steps">
+                @for (step of nextSteps(); track step) {
+                  <li>{{ step }}</li>
+                }
+              </ul>
+            }
+          </div>
+        </div>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="insurance-form">
+        <div class="form-section">
+          <h3>Insurance Provider</h3>
+          <label>
+            <span>Provider Name <em>*</em></span>
+            <input type="text" formControlName="provider_name" placeholder="e.g. Blue Cross Blue Shield" />
+            @if (hasError('provider_name', 'required')) {
+              <span class="field-error">Provider name is required.</span>
+            }
+          </label>
+        </div>
+
+        <div class="form-row">
+          <label>
+            <span>Policy Number <em>*</em></span>
+            <input type="text" formControlName="policy_number" placeholder="e.g. ABC123456789" />
+            @if (hasError('policy_number', 'required')) {
+              <span class="field-error">Policy number is required.</span>
+            }
+            @if (hasError('policy_number', 'minlength')) {
+              <span class="field-error">Policy number must be at least 5 characters.</span>
+            }
+          </label>
+          <label>
+            <span>Group Number</span>
+            <input type="text" formControlName="group_number" placeholder="e.g. GRP001 (optional)" />
+            @if (hasError('group_number', 'maxlength')) {
+              <span class="field-error">Group number must be 20 characters or less.</span>
+            }
+          </label>
+        </div>
+
+        <div class="form-section">
+          <h3>Policy Holder</h3>
+          <label>
+            <span>Full Name <em>*</em></span>
+            <input type="text" formControlName="policy_holder_name" placeholder="Policy holder's full name" />
+            @if (hasError('policy_holder_name', 'required')) {
+              <span class="field-error">Name is required.</span>
+            }
+          </label>
+          <div class="form-row">
+            <label>
+              <span>Date of Birth <em>*</em></span>
+              <input type="date" formControlName="date_of_birth" />
+              @if (hasError('date_of_birth', 'required')) {
+                <span class="field-error">Date of birth is required.</span>
+              }
+            </label>
+            <label>
+              <span>Relationship to Patient</span>
+              <select formControlName="relationship_to_patient">
+                <option value="self">Self</option>
+                <option value="spouse">Spouse</option>
+                <option value="child">Child</option>
+                <option value="parent">Parent</option>
+                <option value="other">Other</option>
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <label>
+            <span>Effective Date</span>
+            <input type="date" formControlName="effective_date" placeholder="Coverage start date (optional)" />
+          </label>
+        </div>
+
+        <div class="form-actions">
+          <button
+            type="submit"
+            class="btn-submit"
+            [disabled]="form.invalid || isSubmitting()"
+          >
+            @if (isSubmitting()) {
+              <span class="spinner"></span>
+              Validating...
+            } @else {
+              <span class="btn-icon">✓</span>
+              Validate Insurance
+            }
+          </button>
+          <a class="btn-back-chat" (click)="backToChat()">← Back to Chat</a>
+        </div>
+      </form>
+    </div>
+  } @else {
+    <div class="success-card">
+      <div class="success-icon-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M20 6L9 17l-5-5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h2>Insurance Verified</h2>
+      <p>Your insurance is active and you can proceed to further steps. Your coverage details have been saved to your session.</p>
+      @if (nextSteps().length) {
+        <ul class="success-next-steps">
+          @for (step of nextSteps(); track step) {
+            <li>{{ step }}</li>
+          }
+        </ul>
+      }
+      <button class="btn-back-chat-primary" (click)="backToChat()">
+        <span>← Back to Chat</span>
+        <span class="btn-hint">Continue with your conversation</span>
+      </button>
+    </div>
+  }
+</div>

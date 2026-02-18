@@ -2,6 +2,16 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
+export interface InsuranceContext {
+  provider_name: string;
+  policy_number: string;
+  group_number: string;
+  policy_holder_name: string;
+  date_of_birth: string;
+  relationship_to_patient: string;
+  effective_date: string;
+}
+
 export interface ChatRequest {
   context: {
     location?: string;
@@ -13,13 +23,30 @@ export interface ChatRequest {
       name: string;
       coordinates: { x: number; y: number };
     };
+    /** Insurance validation context */
+    provider_name?: string;
+    policy_number?: string;
+    group_number?: string;
+    policy_holder_name?: string;
+    date_of_birth?: string;
+    relationship_to_patient?: string;
+    effective_date?: string;
   };
   message: string;
   session_id: string;
 }
 
-export interface Doctor {
+export interface DoctorSlot {
   id: number;
+  doctor_id: number;
+  slot_date: string;
+  slot_time: string;
+  duration_minutes: number;
+  location?: string;
+}
+
+export interface Doctor {
+  id: string | number;
   name: string;
   email: string;
   specialty: string;
@@ -29,6 +56,7 @@ export interface Doctor {
   rating?: number;
   imageUrl?: string;
   availableSlots?: string[];
+  slots?: DoctorSlot[];
 }
 
 export interface SymptomAnalysis {

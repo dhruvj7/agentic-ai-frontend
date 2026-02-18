@@ -1,16 +1,18 @@
-import { 
-  Component, 
-  inject, 
-  signal, 
-  ViewChild, 
-  ElementRef, 
-  AfterViewChecked 
+import {
+  Component,
+  inject,
+  signal,
+  ViewChild,
+  ElementRef,
+  AfterViewChecked,
+  OnInit,
+  effect
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { ChatApiService, ChatResponse, Doctor as ApiDoctor } from '../../services/chat-api.service';
 import { ChatMessage, MessageContent } from '../../models/chat-message.model';
 import { DoctorMatchService } from '../../services/doctor-match.service';
-import { Doctor } from '../../models/doctor.model';
+import { ChatStateService } from '../../services/chat-state.service';
 import { ChangeDetectorRef } from '@angular/core';
 
 @Component({
@@ -18,10 +20,17 @@ import { ChangeDetectorRef } from '@angular/core';
   templateUrl: './chat-assistant.html',
   styleUrl: './chat-assistant.scss',
 })
-export class ChatAssistant implements AfterViewChecked {
+export class ChatAssistant implements OnInit, AfterViewChecked {
   @ViewChild('messagesContainer') private messagesContainer!: ElementRef<HTMLDivElement>;
 
-  constructor(private cdr:ChangeDetectorRef) { }
+  constructor(private cdr: ChangeDetectorRef) {
+    effect(() => {
+      const msgs = this.messages();
+      if (msgs.length > 0) {
+        this.chatState.save(msgs, this.sessionId);
+      }
+    });
+  }
 
   startNavigation(msg: any) {
   const steps = msg.content.navigation.route.steps;
@@ -47,16 +56,35 @@ export class ChatAssistant implements AfterViewChecked {
   private chatApi = inject(ChatApiService);
   private doctorMatch = inject(DoctorMatchService);
   private router = inject(Router);
+  private chatState = inject(ChatStateService);
 
   readonly messages = signal<ChatMessage[]>([]);
   readonly inputValue = signal('');
   readonly isTyping = signal(false);
   readonly assistantName = 'AI Care Navigator';
-  readonly sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  private _sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+  private get sessionId(): string {
+    return this._sessionId;
+  }
 
   private scrollToBottom = false;
   private userAge = 35; // Could come from user profile
   private userLocation = 'hospital_lobby'; // Could be dynamic
+
+  ngOnInit(): void {
+    if (this.chatState.hasStoredState()) {
+      const stored = this.chatState.getMessages();
+      const sid = this.chatState.getSessionId();
+      if (stored.length > 0) {
+        this.messages.set(stored);
+        this.scrollToBottom = true;
+      }
+      if (sid) {
+        this._sessionId = sid;
+      }
+    }
+  }
 
   ngAfterViewChecked(): void {
     if (this.scrollToBottom && this.messagesContainer?.nativeElement) {
@@ -81,7 +109,7 @@ export class ChatAssistant implements AfterViewChecked {
       content: { type: 'text', text },
       timestamp: new Date()
     }]);
-    
+
     this.inputValue.set('');
     this.scrollToBottom = true;
     this.isTyping.set(true);
@@ -120,7 +148,7 @@ export class ChatAssistant implements AfterViewChecked {
 
     const content: MessageContent = this.parseResponseContent(response);
     console.log("content--",content)
-    
+
     this.messages.update(m => [...m, {
       role: 'assistant',
       content,
@@ -130,7 +158,7 @@ export class ChatAssistant implements AfterViewChecked {
 
     // Store matched doctors if available
     if (content.careOptions?.matched_doctors) {
-      this.doctorMatch.setMatchedDoctors(content.careOptions.matched_doctors);
+      this.doctorMatch.setMatchedDoctors(content?.careOptions?.matched_doctors);
     }
 
     this.scrollToBottom = true;
@@ -142,7 +170,7 @@ export class ChatAssistant implements AfterViewChecked {
    */
   private transformDoctors(doctors: any[]): Doctor[] {
     if (!Array.isArray(doctors)) return [];
-    
+
     return doctors.map(doctor => {
       const transformed: Doctor = {
         id: doctor.id,
@@ -179,34 +207,75 @@ export class ChatAssistant implements AfterViewChecked {
   private parseResponseContent(response: ChatResponse): MessageContent {
     const { result, intent } = response;
 
+    const resolveInsuranceHint = (r: { intent?: string | string[]; resultIntent?: string; available_endpoints?: Record<string, string> }): { requires: boolean; link?: string } => {
+      const intentStr = Array.isArray(r.intent) ? (r.intent.includes('insurance_verification') || r.intent.includes('insurance_validation') ? 'insurance' : (r.intent[0] ?? '')) : (r.intent ?? '');
+      const resultIntent = r.resultIntent ?? '';
+      const isInsuranceIntent =
+        intentStr === 'insurance_verification' || intentStr === 'insurance_validation' ||
+        intentStr === 'validate_insurance' || intentStr === 'insurance' ||
+        resultIntent === 'insurance_verification' || resultIntent === 'insurance_validation';
+      const link = r.available_endpoints?.['insurance'] ?? r.available_endpoints?.['insurance_validation'] ?? r.available_endpoints?.['insurance_verification'];
+      return { requires: isInsuranceIntent || !!link, link };
+    };
+
     // Handle multi-intent responses
     if (Array.isArray(intent) && result.sub_results) {
+      const subResults = result.sub_results.map(sr => {
+        const insurance = resolveInsuranceHint({ intent: sr.intent, resultIntent: sr.intent, available_endpoints: sr.available_endpoints });
+        return {
+          intent: sr.intent,
+          message: sr.message,
+          analysis: sr.analysis,
+          recommendations: sr.recommendations,
+          careOptions: sr.care_options,
+          bookingFlow: sr.booking_flow,
+          instructions: sr.instructions,
+          nextSteps: sr.next_steps,
+          requiresInsuranceValidation: insurance.requires,
+          insuranceLink: insurance.link
+        };
+      });
+      const hasInsurance = subResults.some(sr => sr.requiresInsuranceValidation);
+      const firstInsuranceLink = subResults.find(sr => sr.insuranceLink)?.insuranceLink;
       return {
         type: 'multi_intent',
         text: result.message,
-        subResults: result.sub_results.map(sr => {
-          const transformedCareOptions = sr.care_options?.matched_doctors
-            ? {
-                ...sr.care_options,
-                matched_doctors: this.transformDoctors(sr.care_options.matched_doctors) as any
-              }
-            : sr.care_options;
-          
-          return {
-            intent: sr.intent,
-            message: sr.message,
-            analysis: sr.analysis,
-            recommendations: sr.recommendations,
-            careOptions: transformedCareOptions,
-            bookingFlow: sr.booking_flow,
-            instructions: sr.instructions,
-            nextSteps: sr.next_steps
-          };
-        })
+        subResults,
+        requiresInsuranceValidation: hasInsurance,
+        insuranceLink: firstInsuranceLink ?? (hasInsurance ? '/insurance' : undefined)
       };
     }
 
-    // Handle single intent responses    
+    // Handle insurance_verification with verification_result (success or failure)
+    const verificationResult = result['verification_result'] as { is_verified?: boolean; verification_status?: string; verification_details?: object; errors?: string[]; message?: string } | undefined;
+    const rootInsurance = resolveInsuranceHint({
+      intent,
+      resultIntent: result.intent,
+      available_endpoints: result.available_endpoints
+    });
+    if (rootInsurance.requires && verificationResult) {
+      return {
+        type: 'insurance_verification_result',
+        text: result.message,
+        insuranceVerificationSuccess: verificationResult.is_verified === true,
+        verificationResult: verificationResult as any,
+        nextSteps: result['next_steps'],
+        requiresInsuranceValidation: !verificationResult.is_verified,
+        insuranceLink: '/insurance'
+      };
+    }
+    // Handle insurance_verification (needs more info - show add insurance button)
+    if (rootInsurance.requires) {
+      return {
+        type: 'insurance_validation',
+        text: result.message,
+        requiresInsuranceValidation: true,
+        insuranceLink: rootInsurance.link ?? '/insurance',
+        instructions: result.instructions ?? (result['follow_up_questions']?.length ? result['follow_up_questions'] : undefined)
+      };
+    }
+
+    // Handle single intent responses
     if (intent === 'symptom_analysis' || result.intent === 'symptom_analysis') {
       const transformedCareOptions = result.care_options?.matched_doctors
         ? {
@@ -214,7 +283,7 @@ export class ChatAssistant implements AfterViewChecked {
             matched_doctors: this.transformDoctors(result.care_options.matched_doctors) as any
           }
         : result.care_options;
-      
+
       return {
         type: 'symptom_analysis',
         text: result.message,
@@ -244,54 +313,15 @@ export class ChatAssistant implements AfterViewChecked {
       };
     }
 
-    // Doctor suggestion / list doctors – use clean card UI instead of raw markdown message
-    const isDoctorSuggestionIntent =
-      intent === 'doctor_suggestion' ||
-      result.intent === 'doctor_suggestion' ||
-      (Array.isArray(intent) && intent.includes('doctor_suggestion'));
-    const doctorsFromResult = result['doctors'] ?? result.care_options?.matched_doctors;
-    const hasDoctors = Array.isArray(doctorsFromResult) && doctorsFromResult.length > 0;
-
-    if ((isDoctorSuggestionIntent || (hasDoctors && !result.analysis && !result.sub_results))) {
-      const rawDoctors = doctorsFromResult ?? [];
-      const matchedDoctors = this.transformDoctors(rawDoctors);
-      const specialty = result['specialty'] as string | undefined;
-      const cleanIntro = specialty
-        ? `Here are ${matchedDoctors.length} ${specialty} doctor${matchedDoctors.length === 1 ? '' : 's'} we found.`
-        : `Here are the ${matchedDoctors.length} doctor${matchedDoctors.length === 1 ? '' : 's'} you asked for.`;
-      return {
-        type: 'doctor_list',
-        text: cleanIntro,
-        careOptions: {
-          matched_doctors: matchedDoctors as any,
-          suggested_specialties: specialty ? [specialty] : []
-        }
-      };
-    }
-
-    // Legacy: list_doctors / doctor_list with care_options
-    const listDoctorsIntent =
-      intent === 'list_doctors' ||
-      intent === 'doctor_list' ||
-      result.intent === 'list_doctors' ||
-      result.intent === 'doctor_list';
-    const hasMatchedDoctors = result.care_options?.matched_doctors?.length;
-    if (listDoctorsIntent && hasMatchedDoctors && result.care_options) {
-      const transformedDoctors = this.transformDoctors(result.care_options.matched_doctors);
-      return {
-        type: 'doctor_list',
-        text: result.message,
-        careOptions: {
-          matched_doctors: transformedDoctors as any,
-          suggested_specialties: result.care_options.suggested_specialties || []
-        }
-      };
-    }
-
-    // Default text response
+    // Default text response - check if API included insurance link/validation hint
+    const defaultInsurance = resolveInsuranceHint({ intent: '', resultIntent: result.intent, available_endpoints: result.available_endpoints });
     return {
       type: 'text',
-      text: result.message
+      text: result.message,
+      ...(defaultInsurance.requires && {
+        requiresInsuranceValidation: true,
+        insuranceLink: defaultInsurance.link ?? '/insurance'
+      })
     };
   }
 
@@ -299,7 +329,22 @@ export class ChatAssistant implements AfterViewChecked {
     this.router.navigate(['/doctors']);
   }
 
-  selectDoctor(doctor: Doctor | ApiDoctor): void {
+  hasInsuranceOnlyAtTopLevel(content: MessageContent): boolean {
+    if (!content.requiresInsuranceValidation) return false;
+    const subs = content.subResults ?? [];
+    return !subs.some((sr) => sr.requiresInsuranceValidation);
+  }
+
+  goToInsurance(link?: string): void {
+    const path = link ?? '/insurance';
+    if (path.startsWith('/')) {
+      this.router.navigateByUrl(path);
+    } else {
+      window.open(path, '_blank');
+    }
+  }
+
+  selectDoctor(doctor: Doctor): void {
     this.doctorMatch.setMatchedDoctors([doctor]);
     this.router.navigate(['/doctors']);
   }
@@ -307,6 +352,15 @@ export class ChatAssistant implements AfterViewChecked {
   expandSection(section: string): void {
     // Toggle section expansion if needed
     console.log('Expand section:', section);
+  }
+
+  formatSlotDisplay(slot: { slot_date: string; slot_time: string }): string {
+    const d = slot.slot_date;
+    if (!d || !slot.slot_time) return '';
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const [y, m, day] = d.split('-');
+    const month = months[parseInt(m || '1', 10) - 1] || m;
+    return `${month} ${parseInt(day || '0', 10)} ${slot.slot_time}`;
   }
 
   getSeverityLabel(severity: string): string {

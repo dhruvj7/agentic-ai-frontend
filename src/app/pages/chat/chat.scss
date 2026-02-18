@@ -7,9 +7,17 @@
 .chat-page-header {
   margin-bottom: 1.5rem;
 
-  .back {
-    display: inline-block;
+  .header-links {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
     margin-bottom: 0.75rem;
+  }
+
+  .back,
+  .insurance-link {
+    display: inline-block;
     color: var(--color-primary);
     text-decoration: none;
     font-weight: 500;
@@ -17,8 +25,20 @@
 
     &:hover {
       text-decoration: underline;
+      color: var(--color-primary-hover);
     }
   }
+
+  // .insurance-link {
+  //   padding: 0.35rem 0.65rem;
+  //   background: rgba(6, 182, 212, 0.12);
+  //   border-radius: var(--radius-sm);
+  //   border: 1px solid rgba(6, 182, 212, 0.3);
+
+  //   &:hover {
+  //     background: rgba(6, 182, 212, 0.2);
+  //   }
+  // }
 
   h1 {
     margin: 0 0 0.25rem;

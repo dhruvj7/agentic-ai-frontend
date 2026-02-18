@@ -5,5 +5,6 @@ export const routes: Routes = [
   { path: 'chat', loadComponent: () => import('./pages/chat/chat').then(m => m.Chat) },
   { path: 'doctors', loadComponent: () => import('./pages/doctors/doctors').then(m => m.Doctors) },
   { path: 'book-appointment/:id', loadComponent: () => import('./pages/book-appointment/book-appointment').then(m => m.BookAppointment) },
+  { path: 'insurance', loadComponent: () => import('./pages/insurance/insurance').then(m => m.Insurance) },
   { path: '**', redirectTo: '' },
 ];
