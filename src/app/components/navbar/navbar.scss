@@ -156,6 +156,353 @@
   }
 }
 
+/* Automation info modal - overlay starts below navbar so navbar stays fully visible */
+.automation-modal-overlay {
+  position: fixed;
+  top: 64px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: 1.5rem;
+  z-index: 2000;
+  animation: overlayFadeIn 0.3s ease-out;
+}
+
+.automation-modal {
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 1.75rem;
+  max-width: min(380px, calc(100vw - 3rem));
+  width: 100%;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+  animation: modalSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  flex-shrink: 0;
+}
+
+.automation-modal-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+
+  .automation-modal-icon {
+    font-size: 2.5rem;
+    display: block;
+    margin-bottom: 0.75rem;
+    animation: iconPulse 2s ease-in-out infinite;
+  }
+
+  h3 {
+    margin: 0 0 0.5rem;
+    font-size: 1.35rem;
+    color: var(--color-text);
+  }
+
+  .automation-modal-desc {
+    margin: 0;
+    font-size: 0.95rem;
+    color: var(--color-text-muted);
+    line-height: 1.5;
+  }
+}
+
+.automation-modal-features {
+  margin: 0 0 1.25rem;
+  padding-left: 1.5rem;
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  line-height: 1.8;
+
+  li {
+    animation: listItemFadeIn 0.4s ease-out backwards;
+
+    @for $i from 1 through 5 {
+      &:nth-child(#{$i}) {
+        animation-delay: #{$i * 0.06}s;
+      }
+    }
+  }
+
+  li strong {
+    color: var(--color-primary);
+  }
+}
+
+.automation-modal-note {
+  margin: 0 0 1.5rem;
+  font-size: 0.85rem;
+  color: var(--color-text-subtle);
+  font-style: italic;
+}
+
+.automation-modal-actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.btn-automation-on,
+.btn-automation-off,
+.btn-got-it {
+  padding: 0.6rem 1rem;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid var(--color-border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--color-text-muted);
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--color-text);
+  }
+
+  &.active {
+    background: linear-gradient(135deg, var(--color-primary), #22c55e);
+    color: var(--color-bg);
+    border-color: transparent;
+  }
+}
+
+.btn-got-it {
+  flex: 1;
+  min-width: 100%;
+  background: var(--color-primary);
+  color: var(--color-bg);
+  border-color: transparent;
+
+  &:hover {
+    background: var(--color-primary-hover);
+    transform: translateY(-1px);
+  }
+}
+
+@keyframes overlayFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(24px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes iconPulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.08); opacity: 0.9; }
+}
+
+@keyframes listItemFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Your Journey - Professional stepper */
+.journey-stepper {
+  position: fixed;
+  top: 64px;
+  left: 0;
+  right: 0;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.98) 0%, rgba(15, 23, 42, 0.95) 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+  padding: 1.25rem 1.5rem;
+  z-index: 999;
+  animation: journeySlideDown 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+}
+
+.journey-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.journey-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-text);
+  letter-spacing: -0.02em;
+
+  .journey-icon {
+    font-size: 1.25rem;
+    opacity: 0.9;
+  }
+}
+
+.journey-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 140px;
+}
+
+.journey-step-count {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.journey-progress-bar {
+  flex: 1;
+  height: 6px;
+  background: rgba(148, 163, 184, 0.2);
+  border-radius: 999px;
+  overflow: hidden;
+  min-width: 80px;
+}
+
+.journey-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-primary), #22c55e);
+  border-radius: 999px;
+  transition: width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.journey-steps {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.step-connector {
+  width: 20px;
+  height: 2px;
+  background: rgba(148, 163, 184, 0.3);
+  border-radius: 1px;
+  flex-shrink: 0;
+  transition: background 0.4s ease;
+
+  &.filled {
+    background: linear-gradient(90deg, #22c55e, var(--color-primary));
+  }
+}
+
+.journey-step {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  .step-node {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    background: rgba(148, 163, 184, 0.3);
+    color: var(--color-text-muted);
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+    z-index: 1;
+    position: relative;
+  }
+
+  .step-number {
+    line-height: 1;
+  }
+
+  .step-check {
+    color: #22c55e;
+    font-size: 0.9rem;
+  }
+
+  &.completed .step-node {
+    background: rgba(34, 197, 94, 0.2);
+    border-color: #22c55e;
+    color: #22c55e;
+  }
+
+  &.active .step-node {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: var(--color-bg);
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3);
+    animation: stepPulse 2s ease-in-out infinite;
+  }
+
+  .step-label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--color-text-muted);
+    transition: color 0.3s;
+  }
+
+  &.completed .step-label {
+    color: var(--color-text);
+  }
+
+  &.active .step-label {
+    color: var(--color-primary);
+    font-weight: 600;
+  }
+}
+
+.journey-back {
+  display: inline-block;
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  transition: color 0.2s;
+
+  &:hover {
+    color: var(--color-primary);
+  }
+}
+
+@keyframes journeySlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes stepPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(59, 130, 246, 0.15);
+  }
+}
+
 @media (max-width: 768px) {
   .menu-toggle {
     display: flex;

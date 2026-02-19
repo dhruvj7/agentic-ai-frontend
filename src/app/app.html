@@ -5,3 +5,49 @@
   </main>
   <app-footer />
 </div>
+
+<!-- Step Transition Modal for Multi-Step Navigation -->
+@if (automation.pendingStepTransition(); as pending) {
+  <div class="step-transition-overlay" (click)="automation.stayOnCurrentStep()">
+    <div class="step-transition-modal" (click)="$event.stopPropagation()">
+      <div class="step-transition-header">
+        <span class="step-transition-icon">{{ pending.isInitial ? '✨' : '🚀' }}</span>
+        <h3>{{ pending.isInitial ? 'Begin Your Journey' : 'Ready for Next Step?' }}</h3>
+        <p class="step-transition-desc">
+          {{ pending.isInitial ? 'Your first step:' : "You've completed the current step. Here's what's next:" }}
+        </p>
+      </div>
+      
+      <div class="step-transition-content">
+        <div class="next-step-info">
+          <div class="step-badge">
+            @let currentIdx = automation.currentStepIndex();
+            <span class="step-number">{{ pending.isInitial ? 1 : currentIdx + 2 }}</span>
+            <span class="step-label">{{ getStepLabel(pending.step.intent) }}</span>
+          </div>
+          <p class="step-message">{{ pending.step.message }}</p>
+          @if (pending.step.data?.destination) {
+            <p class="step-detail">📍 Destination: {{ pending.step.data.destination }}</p>
+          }
+        </div>
+      </div>
+
+      <div class="step-transition-actions">
+        <button
+          type="button"
+          class="btn-stay-step"
+          (click)="automation.stayOnCurrentStep()"
+        >
+          Stay Here
+        </button>
+        <button
+          type="button"
+          class="btn-proceed-step"
+          (click)="automation.confirmStepAndNavigate()"
+        >
+          {{ pending.isInitial ? 'Start Journey' : 'Continue to Next Step' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

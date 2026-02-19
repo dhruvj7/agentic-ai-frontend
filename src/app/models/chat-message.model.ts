@@ -57,6 +57,8 @@ export interface MessageContent {
     nextSteps?: string[];
     requiresInsuranceValidation?: boolean;
     insuranceLink?: string;
+    navigation?: any; // Hospital navigation data
+    currentStepIndex?: number; // For navigation step tracking
   }>;
 }
 

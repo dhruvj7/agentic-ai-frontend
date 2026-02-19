@@ -105,6 +105,7 @@ export interface SubResult {
   available_endpoints?: Record<string, string>;
   instructions?: string[];
   intent: string;
+  navigation?: any; // Hospital navigation data
 }
 
 export interface ChatResponse {

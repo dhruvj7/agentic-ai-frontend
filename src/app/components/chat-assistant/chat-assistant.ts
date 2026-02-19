@@ -35,7 +35,15 @@ export class ChatAssistant implements OnInit, AfterViewChecked {
   }
 
   startNavigation(msg: any) {
-  const steps = msg.content.navigation.route.steps;
+  const route = msg.content.navigation?.route;
+  if (!route || !route.steps) {
+    // No route available (destination not found) - still mark step as completed
+    // User has seen the "couldn't find" message with suggestions
+    this.automation.markStepCompleted('hospital_nav');
+    return;
+  }
+
+  const steps = route.steps;
 
   // Reset this message only
   msg.content.currentStepIndex = 0;
@@ -44,6 +52,9 @@ export class ChatAssistant implements OnInit, AfterViewChecked {
   if (msg.content.navigationInterval) {
     clearInterval(msg.content.navigationInterval);
   }
+
+  // Mark hospital navigation step as completed when user starts navigation
+  this.automation.markStepCompleted('hospital_nav');
 
   msg.content.navigationInterval = setInterval(() => {
     if (msg.content.currentStepIndex < steps.length - 1) {
@@ -54,6 +65,41 @@ export class ChatAssistant implements OnInit, AfterViewChecked {
     }
   }, 2000);
 }
+
+  startNavigationFromSubResult(subResult: any, subResultIndex: number) {
+    const route = subResult.navigation?.route;
+    if (!route || !route.steps) {
+      // No route available (destination not found) - still mark step as completed
+      this.automation.markStepCompleted('hospital_nav');
+      return;
+    }
+
+    const steps = route.steps;
+
+    // Initialize currentStepIndex if not exists
+    if (subResult.currentStepIndex === undefined) {
+      subResult.currentStepIndex = 0;
+    } else {
+      subResult.currentStepIndex = 0; // Reset
+    }
+
+    // Clear existing interval if restarting
+    if (subResult.navigationInterval) {
+      clearInterval(subResult.navigationInterval);
+    }
+
+    // Mark hospital navigation step as completed when user starts navigation
+    this.automation.markStepCompleted('hospital_nav');
+
+    subResult.navigationInterval = setInterval(() => {
+      if (subResult.currentStepIndex < steps.length - 1) {
+        subResult.currentStepIndex++;
+        this.cdr.detectChanges();
+      } else {
+        clearInterval(subResult.navigationInterval);
+      }
+    }, 2000);
+  }
 
   private chatApi = inject(ChatApiService);
   private doctorMatch = inject(DoctorMatchService);
@@ -159,9 +205,14 @@ export class ChatAssistant implements OnInit, AfterViewChecked {
       intent: response.intent
     }]);
 
-    // Store matched doctors if available (normalize to app Doctor model)
-    if (content.careOptions?.matched_doctors) {
-      const normalized = this.transformDoctors(content.careOptions.matched_doctors as any);
+    // Store matched doctors if available (from content or sub_results for multi_intent)
+    let doctorsToSet = content.careOptions?.matched_doctors;
+    if (!doctorsToSet && content.subResults) {
+      const firstWithDoctors = content.subResults.find(sr => sr.careOptions?.matched_doctors?.length);
+      doctorsToSet = firstWithDoctors?.careOptions?.matched_doctors;
+    }
+    if (doctorsToSet?.length) {
+      const normalized = this.transformDoctors(doctorsToSet as any);
       if (normalized.length) {
         this.doctorMatch.setMatchedDoctors(normalized);
       }
@@ -254,14 +305,21 @@ export class ChatAssistant implements OnInit, AfterViewChecked {
           instructions: sr.instructions,
           nextSteps: sr.next_steps,
           requiresInsuranceValidation: insurance.requires,
-          insuranceLink: insurance.link
+          insuranceLink: insurance.link,
+          navigation: sr.navigation, // Include navigation data for hospital_navigation
+          currentStepIndex: -1 // Initialize step index for navigation
         };
       });
       const hasInsurance = subResults.some(sr => sr.requiresInsuranceValidation);
       const firstInsuranceLink = subResults.find(sr => sr.insuranceLink)?.insuranceLink;
+      const hasDoctorCards = subResults.some(sr => sr.careOptions?.matched_doctors?.length);
+      // Use short intro when we show doctor cards to avoid raw formatted list
+      const introText = hasDoctorCards
+        ? 'Based on your request, here is what I found.'
+        : result.message;
       return {
         type: 'multi_intent',
-        text: result.message,
+        text: introText,
         subResults,
         requiresInsuranceValidation: hasInsurance,
         insuranceLink: firstInsuranceLink ?? (hasInsurance ? '/insurance' : undefined)
@@ -305,10 +363,15 @@ export class ChatAssistant implements OnInit, AfterViewChecked {
             matched_doctors: this.transformDoctors(result.care_options.matched_doctors) as any
           }
         : result.care_options;
+      // Avoid raw formatted doctor list; use short intro when we have doctor cards
+      const hasDoctors = !!transformedCareOptions?.matched_doctors?.length;
+      const symptomText = hasDoctors
+        ? 'Based on your symptoms, here is my analysis and recommended doctors.'
+        : result.message;
 
       return {
         type: 'symptom_analysis',
-        text: result.message,
+        text: symptomText,
         analysis: result.analysis,
         recommendations: result.recommendations,
         careOptions: transformedCareOptions,
@@ -332,6 +395,27 @@ export class ChatAssistant implements OnInit, AfterViewChecked {
         navigation: result.navigation,
         instructions: result.instructions,
         currentStepIndex: -1
+      };
+    }
+
+    // Doctor suggestion / list - use clean card UI, never show raw formatted message
+    const doctorsFromRoot = result['doctors'] ?? result.care_options?.matched_doctors;
+    const isDoctorIntent =
+      intent === 'doctor_suggestion' || result.intent === 'doctor_suggestion' ||
+      (Array.isArray(intent) && intent.includes('doctor_suggestion'));
+    if ((isDoctorIntent || doctorsFromRoot?.length) && Array.isArray(doctorsFromRoot) && doctorsFromRoot.length) {
+      const normalized = this.transformDoctors(doctorsFromRoot);
+      const specialty = result['specialty'] as string | undefined;
+      const cleanIntro = specialty
+        ? `Here are ${normalized.length} ${specialty} doctor${normalized.length === 1 ? '' : 's'} we found.`
+        : `Here are the ${normalized.length} doctor${normalized.length === 1 ? '' : 's'} you asked for.`;
+      return {
+        type: 'doctor_list',
+        text: cleanIntro,
+        careOptions: {
+          matched_doctors: normalized as any,
+          suggested_specialties: specialty ? [specialty] : []
+        }
       };
     }
 
@@ -386,6 +470,14 @@ export class ChatAssistant implements OnInit, AfterViewChecked {
     const [y, m, day] = d.split('-');
     const month = months[parseInt(m || '1', 10) - 1] || m;
     return `${month} ${parseInt(day || '0', 10)} ${slot.slot_time}`;
+  }
+
+  getNavTargetLabel(target: string): string {
+    const t = (target || '').toLowerCase();
+    if (t === 'insurance') return 'the Insurance page';
+    if (t === 'doctors' || t === 'doctor_list') return 'the Doctors page';
+    if (t === 'chat') return 'Chat';
+    return target || 'that page';
   }
 
   getSeverityLabel(severity: string): string {

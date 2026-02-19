@@ -235,3 +235,93 @@
   box-shadow: 0 0 15px rgba(0, 201, 224, 0.4);
   transform: scale(1.05);
 }
+
+/* Slot confirmation modal (smart automation) */
+.slot-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  animation: fadeIn 0.25s ease-out;
+}
+
+.slot-confirm-modal {
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 1.75rem;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: var(--shadow-md);
+  animation: scaleIn 0.3s var(--ease-spring);
+}
+
+.slot-confirm-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+
+  .slot-confirm-icon {
+    font-size: 2.5rem;
+    display: block;
+    margin-bottom: 0.75rem;
+  }
+
+  h3 {
+    margin: 0 0 0.5rem;
+    font-size: 1.2rem;
+    color: var(--color-text);
+  }
+
+  .slot-confirm-sub {
+    margin: 0;
+    font-size: 0.95rem;
+    color: var(--color-text-muted);
+
+    strong {
+      color: var(--color-primary);
+    }
+  }
+}
+
+.slot-confirm-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.btn-confirm-slot,
+.btn-cancel-slot {
+  padding: 0.65rem 1.25rem;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.btn-confirm-slot {
+  background: linear-gradient(135deg, var(--color-primary), #22c55e);
+  color: var(--color-bg);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(6, 182, 212, 0.4);
+  }
+}
+
+.btn-cancel-slot {
+  background: transparent;
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--color-text);
+  }
+}

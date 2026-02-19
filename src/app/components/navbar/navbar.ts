@@ -1,4 +1,4 @@
-import { Component, signal, inject } from '@angular/core';
+import { Component, signal, inject, afterNextRender } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { AutomationService } from '../../services/automation.service';
 
@@ -10,11 +10,32 @@ import { AutomationService } from '../../services/automation.service';
 })
 export class Navbar {
   private router = inject(Router);
-  private automation = inject(AutomationService);
+  readonly automation = inject(AutomationService);
   menuOpen = signal(false);
+  showAutomationInfo = signal(false);
 
-  // Expose automation state to template
   automationEnabled = this.automation.automationEnabled;
+  navigationQueue = this.automation.navigationQueue;
+  currentStepIndex = this.automation.currentStepIndex;
+
+  getStepLabel(intent: string): string {
+    const labels: Record<string, string> = {
+      'doctor_suggestion': 'View Doctors',
+      'symptom_analysis': 'Symptom Analysis',
+      'hospital_navigation': 'Hospital Navigation',
+      'insurance_verification': 'Insurance Verification',
+      'insurance_validation': 'Insurance Validation',
+    };
+    return labels[intent] || intent.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  }
+
+  constructor() {
+    afterNextRender(() => {
+      if (!this.automation.hasSeenIntro()) {
+        setTimeout(() => this.showAutomationInfo.set(true), 600);
+      }
+    });
+  }
 
   toggleMenu(): void {
     this.menuOpen.update(v => !v);
@@ -22,6 +43,16 @@ export class Navbar {
 
   closeMenu(): void {
     this.menuOpen.set(false);
+  }
+
+  openAutomationInfo(): void {
+    this.showAutomationInfo.set(true);
+    this.closeMenu();
+  }
+
+  closeAutomationInfo(): void {
+    this.showAutomationInfo.set(false);
+    this.automation.markIntroSeen();
   }
 
   toggleAutomation(): void {

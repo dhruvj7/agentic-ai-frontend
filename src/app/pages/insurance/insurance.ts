@@ -3,6 +3,7 @@ import { Router, RouterLink } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ChatApiService, ChatResponse } from '../../services/chat-api.service';
 import { ChatStateService } from '../../services/chat-state.service';
+import { AutomationService } from '../../services/automation.service';
 import { ChatMessage } from '../../models/chat-message.model';
 import { MessageContent } from '../../models/chat-message.model';
 
@@ -17,6 +18,7 @@ export class Insurance {
   private fb = inject(FormBuilder);
   private chatApi = inject(ChatApiService);
   private chatState = inject(ChatStateService);
+  readonly automation = inject(AutomationService);
 
   readonly form: FormGroup;
   readonly isSubmitting = signal(false);
@@ -97,10 +99,18 @@ export class Insurance {
             this.verificationSuccess.set(true);
             this.error.set(null);
             this.nextSteps.set((result?.['next_steps'] as string[]) ?? []);
+            // Mark insurance step as completed for multi-step navigation
+            setTimeout(() => {
+              this.automation.completeCurrentStep();
+            }, 1500);
           } else {
             this.form.reset({ relationship_to_patient: 'self' });
             this.error.set(result?.message ?? 'Verification failed.');
             this.nextSteps.set((result?.['next_steps'] as string[]) ?? []);
+            // Still mark as completed even if verification failed (user interacted)
+            setTimeout(() => {
+              this.automation.completeCurrentStep();
+            }, 1500);
           }
         },
         error: (err) => {

@@ -230,6 +230,107 @@
                       </button>
                     </div>
                   }
+
+                  <!-- HOSPITAL NAVIGATION SECTION -->
+                  @if (subResult.intent === 'hospital_navigation') {
+                    <div class="hospital-navigation">
+                      <p class="sub-message">{{ subResult.message }}</p>
+
+                      @if (subResult.navigation) {
+                        <div class="nav-card">
+                          <!-- HEADER -->
+                          <div class="nav-header">
+                            <div>
+                              <div class="nav-title">
+                                {{ subResult.navigation.current_location?.name }}
+                                @if (subResult.navigation.destination?.name) {
+                                  → {{ subResult.navigation.destination.name }}
+                                } @else {
+                                  <span class="no-destination">(Destination not found)</span>
+                                }
+                              </div>
+
+                              @if (subResult.navigation.route) {
+                                <div class="nav-meta">
+                                  📏 {{ subResult.navigation.route?.distance }} ft • ⏱️
+                                  {{ subResult.navigation.route?.estimated_time }} sec • ♿
+                                  {{
+                                    subResult.navigation.route?.accessible ? 'Accessible' : 'Standard Route'
+                                  }}
+                                </div>
+                              } @else {
+                                <div class="nav-meta">
+                                  <span class="suggested-locations">📍 Suggested locations available</span>
+                                </div>
+                              }
+                            </div>
+
+                            @if (subResult.navigation.route?.steps?.length) {
+                              <button class="start-btn" (click)="startNavigationFromSubResult(subResult, $index)">▶ Start</button>
+                            }
+                          </div>
+
+                          <!-- TIMELINE -->
+                          @if (subResult.navigation.route?.steps?.length) {
+                            <div class="timeline">
+                              @for (step of (subResult.navigation.route.steps ?? []); track $index) {
+                                <div
+                                  class="timeline-step"
+                                  [class.active]="$index === (subResult.currentStepIndex ?? -1)"
+                                  [class.completed]="$index < (subResult.currentStepIndex ?? -1)"
+                                >
+                                  <div class="timeline-icon">
+                                    @switch (step.type) {
+                                      @case ('walk') {
+                                        🚶
+                                      }
+                                      @case ('elevator') {
+                                        🛗
+                                      }
+                                      @case ('arrival') {
+                                        📍
+                                      }
+                                      @case ('outdoor_walk') {
+                                        🌤️
+                                      }
+                                      @default {
+                                        ➡️
+                                      }
+                                    }
+                                  </div>
+
+                                  <div class="timeline-content">
+                                    <div
+                                      class="step-text"
+                                      [class.active-text]="$index === (subResult.currentStepIndex ?? -1)"
+                                    >
+                                      {{ step.instruction }}
+                                    </div>
+
+                                    @if (step.distance) {
+                                      <div class="step-distance">{{ step.distance }} ft</div>
+                                    }
+                                  </div>
+                                </div>
+                              }
+                            </div>
+
+                            <!-- PROGRESS BAR -->
+                            <div class="progress-wrapper">
+                              <div
+                                class="progress-bar"
+                                [style.width.%]="
+                                  (((subResult.currentStepIndex ?? -1) + 1) /
+                                    (subResult.navigation.route?.steps?.length ?? 1)) *
+                                  100
+                                "
+                              ></div>
+                            </div>
+                          }
+                        </div>
+                      }
+                    </div>
+                  }
                 </div>
               }
 
@@ -554,10 +655,10 @@
                       </div>
 
                       <div class="nav-meta">
-                        📏 {{ msg.content.navigation.route.distance }} ft • ⏱️
-                        {{ msg.content.navigation.route.estimated_time }} sec • ♿
+                        📏 {{ msg.content.navigation.route?.distance }} ft • ⏱️
+                        {{ msg.content.navigation.route?.estimated_time }} sec • ♿
                         {{
-                          msg.content.navigation.route.accessible ? 'Accessible' : 'Standard Route'
+                          msg.content.navigation.route?.accessible ? 'Accessible' : 'Standard Route'
                         }}
                       </div>
                     </div>
@@ -567,7 +668,7 @@
 
                   <!-- TIMELINE -->
                   <div class="timeline">
-                    @for (step of msg.content.navigation.route.steps; track $index) {
+                    @for (step of (msg.content.navigation.route?.steps ?? []); track $index) {
                       <div
                         class="timeline-step"
                         [class.active]="$index === msg.content.currentStepIndex"
@@ -677,8 +778,8 @@
             I can continue this journey for you.
           </p>
           <p class="automation-body">
-            I detected that you might want to navigate to
-            <strong>{{ navReq.target }}</strong>. Should I take you there now?
+            I detected that you might want to go to
+            <strong>{{ getNavTargetLabel(navReq.target) }}</strong>. Should I take you there now?
           </p>
           <div class="automation-actions">
             <button type="button" class="btn-primary" (click)="automation.confirmNavigation()">

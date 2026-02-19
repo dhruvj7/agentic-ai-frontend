@@ -70,3 +70,27 @@
     <a routerLink="/chat" class="link-chat">Go to chat</a>
   }
 </div>
+
+<!-- Smart automation: slot confirmation modal -->
+@if (showSlotConfirmModal() && automation.pendingSlotConfirmation(); as pending) {
+  <div class="slot-confirm-overlay" (click)="cancelAutoSlot()">
+    <div class="slot-confirm-modal" (click)="$event.stopPropagation()">
+      <div class="slot-confirm-header">
+        <span class="slot-confirm-icon">📅</span>
+        <h3>Confirm your appointment</h3>
+        <p class="slot-confirm-sub">
+          Book with <strong>{{ pending.doctor?.name }}</strong> on
+          <strong>{{ formatSlotLabel(pending.slot!) }}</strong>?
+        </p>
+      </div>
+      <div class="slot-confirm-actions">
+        <button type="button" class="btn-confirm-slot" (click)="confirmAutoSlot()">
+          Yes, Book
+        </button>
+        <button type="button" class="btn-cancel-slot" (click)="cancelAutoSlot()">
+          Choose different slot
+        </button>
+      </div>
+    </div>
+  </div>
+}

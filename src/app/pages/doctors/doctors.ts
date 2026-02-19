@@ -1,6 +1,7 @@
-import { Component, inject, computed, signal } from '@angular/core';
+import { Component, inject, computed, signal, OnInit } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { DoctorMatchService } from '../../services/doctor-match.service';
+import { AutomationService } from '../../services/automation.service';
 
 @Component({
   selector: 'app-doctors',
@@ -9,9 +10,10 @@ import { DoctorMatchService } from '../../services/doctor-match.service';
   templateUrl: './doctors.html',
   styleUrl: './doctors.scss',
 })
-export class Doctors {
+export class Doctors implements OnInit {
   private doctorMatch = inject(DoctorMatchService);
   private router = inject(Router);
+  readonly automation = inject(AutomationService);
 
   // Doctors signal
   readonly doctors = computed(() => {
@@ -21,6 +23,24 @@ export class Doctors {
   // Selected slot state
   selectedDoctorId = signal<number | null>(null);
   selectedSlotId = signal<number | null>(null);
+
+  /** Show slot confirmation modal when automation pre-selected a slot */
+  showSlotConfirmModal = signal(false);
+
+  ngOnInit(): void {
+    const pending = this.automation.pendingSlotConfirmation();
+    if (pending?.doctor && pending?.slot) {
+      this.selectedDoctorId.set(pending.doctor.id);
+      this.selectedSlotId.set(pending.slot.id);
+      this.showSlotConfirmModal.set(true);
+    }
+
+    // Mark doctors step as completed if part of multi-step navigation
+    // Give user a moment to see the page, then mark complete
+    setTimeout(() => {
+      this.automation.completeCurrentStep();
+    }, 2000);
+  }
 
   selectSlot(doctorId: number, slotId: number) {
     this.selectedDoctorId.set(doctorId);
@@ -68,5 +88,22 @@ groupSlotsByDate(slots: any[]) {
       .join('')
       .slice(0, 2)
       .toUpperCase();
+  }
+
+  confirmAutoSlot(): void {
+    this.automation.confirmSlotAndNavigateToBooking();
+    this.showSlotConfirmModal.set(false);
+  }
+
+  cancelAutoSlot(): void {
+    this.automation.cancelSlotConfirmation();
+    this.showSlotConfirmModal.set(false);
+  }
+
+  formatSlotLabel(slot: { slot_date: string; slot_time: string }): string {
+    if (!slot?.slot_date || !slot?.slot_time) return '';
+    const [y, m, d] = slot.slot_date.split('-');
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return `${months[parseInt(m || '1', 10) - 1] || m} ${d}, ${slot.slot_time}`;
   }
 }

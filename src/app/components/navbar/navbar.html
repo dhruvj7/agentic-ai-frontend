@@ -26,13 +26,103 @@
     <button
       type="button"
       class="automation-toggle"
-      (click)="toggleAutomation()"
+      (click)="openAutomationInfo()"
     >
       <span class="automation-dot" [class.enabled]="automationEnabled()"></span>
       <span class="automation-label">
-        Automation Mode:
+        Auto Navigate:
         <strong>{{ automationEnabled() ? 'On' : 'Off' }}</strong>
       </span>
     </button>
   </nav>
+
+  <!-- Your Journey - Multi-step navigation stepper -->
+  @if (navigationQueue().length > 1) {
+    <div class="journey-stepper">
+      <div class="journey-header">
+        <div class="journey-title">
+          <span class="journey-icon">🗺️</span>
+          <span>Your Journey</span>
+        </div>
+        <div class="journey-progress">
+          <span class="journey-step-count">Step {{ currentStepIndex() + 1 }} of {{ navigationQueue().length }}</span>
+          <div class="journey-progress-bar">
+            <div
+              class="journey-progress-fill"
+              [style.width.%]="((currentStepIndex() + 1) / navigationQueue().length) * 100"
+            ></div>
+          </div>
+        </div>
+      </div>
+      <div class="journey-steps">
+        @for (step of navigationQueue(); track step.id; let i = $index; let last = $last) {
+          @if (i > 0) {
+            <div
+              class="step-connector"
+              [class.filled]="i <= currentStepIndex()"
+            ></div>
+          }
+          <div
+            class="journey-step"
+            [class.active]="i === currentStepIndex()"
+            [class.completed]="step.completed"
+          >
+            <div class="step-node">
+              @if (step.completed) {
+                <span class="step-check">✓</span>
+              } @else {
+                <span class="step-number">{{ i + 1 }}</span>
+              }
+            </div>
+            <span class="step-label">{{ getStepLabel(step.intent) }}</span>
+          </div>
+        }
+      </div>
+      <a routerLink="/" class="journey-back" (click)="closeMenu()">← Back to home</a>
+    </div>
+  }
+
+  <!-- Automation info modal -->
+  @if (showAutomationInfo()) {
+    <div class="automation-modal-overlay" (click)="closeAutomationInfo()">
+      <div class="automation-modal" (click)="$event.stopPropagation()">
+        <div class="automation-modal-header">
+          <span class="automation-modal-icon">✨</span>
+          <h3>Smart Auto-Navigate</h3>
+          <p class="automation-modal-desc">
+            When enabled, the AI will automatically take you to the right page based on your request—with minimal effort.
+          </p>
+        </div>
+        <ul class="automation-modal-features">
+          <li><strong>Insurance validation</strong> → Insurance page</li>
+          <li><strong>Doctor suggestions</strong> → Doctors page</li>
+          <li><strong>Book first slot</strong> → Pre-selects doctor & slot, confirms, then navigates to booking</li>
+        </ul>
+        <p class="automation-modal-note">
+          When off, you'll be asked before navigating. Your preference is saved.
+        </p>
+        <div class="automation-modal-actions">
+          <button
+            type="button"
+            class="btn-automation-on"
+            [class.active]="automationEnabled()"
+            (click)="automation.enableAutomation()"
+          >
+            Turn On
+          </button>
+          <button
+            type="button"
+            class="btn-automation-off"
+            [class.active]="!automationEnabled()"
+            (click)="automation.disableAutomation()"
+          >
+            Turn Off
+          </button>
+          <button type="button" class="btn-got-it" (click)="closeAutomationInfo()">
+            Got it
+          </button>
+        </div>
+      </div>
+    </div>
+  }
 </header>
