@@ -15,6 +15,7 @@ import { DoctorMatchService } from '../../services/doctor-match.service';
 import { ChatStateService } from '../../services/chat-state.service';
 import { ChangeDetectorRef } from '@angular/core';
 import { Doctor } from '../../models/doctor.model';
+import { AutomationService } from '../../services/automation.service';
 
 @Component({
   selector: 'app-chat-assistant',
@@ -58,6 +59,7 @@ export class ChatAssistant implements OnInit, AfterViewChecked {
   private doctorMatch = inject(DoctorMatchService);
   private router = inject(Router);
   private chatState = inject(ChatStateService);
+  readonly automation = inject(AutomationService);
 
   readonly messages = signal<ChatMessage[]>([]);
   readonly inputValue = signal('');
@@ -164,6 +166,9 @@ export class ChatAssistant implements OnInit, AfterViewChecked {
         this.doctorMatch.setMatchedDoctors(normalized);
       }
     }
+
+    // Let automation layer inspect intents (navigation, etc.)
+    this.automation.handleIntent(response);
 
     this.scrollToBottom = true;
   }

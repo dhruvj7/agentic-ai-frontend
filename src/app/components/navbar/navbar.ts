@@ -1,5 +1,6 @@
 import { Component, signal, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
+import { AutomationService } from '../../services/automation.service';
 
 @Component({
   selector: 'app-navbar',
@@ -9,7 +10,11 @@ import { Router, RouterLink } from '@angular/router';
 })
 export class Navbar {
   private router = inject(Router);
+  private automation = inject(AutomationService);
   menuOpen = signal(false);
+
+  // Expose automation state to template
+  automationEnabled = this.automation.automationEnabled;
 
   toggleMenu(): void {
     this.menuOpen.update(v => !v);
@@ -17,6 +22,10 @@ export class Navbar {
 
   closeMenu(): void {
     this.menuOpen.set(false);
+  }
+
+  toggleAutomation(): void {
+    this.automation.toggleAutomation();
   }
 
   onNavClick(e: Event, sectionId: string): void {

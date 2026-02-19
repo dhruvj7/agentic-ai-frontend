@@ -20,5 +20,19 @@
     <a class="nav-link" routerLink="/" fragment="agents" (click)="onNavClick($event, 'agents')">Agents</a>
     <a class="nav-link" routerLink="/" fragment="guidance" (click)="onNavClick($event, 'guidance')">Guidance</a>
     <a class="nav-link" routerLink="/" fragment="contact" (click)="onNavClick($event, 'contact')">Contact Us</a>
+
+    <div class="nav-divider"></div>
+
+    <button
+      type="button"
+      class="automation-toggle"
+      (click)="toggleAutomation()"
+    >
+      <span class="automation-dot" [class.enabled]="automationEnabled()"></span>
+      <span class="automation-label">
+        Automation Mode:
+        <strong>{{ automationEnabled() ? 'On' : 'Off' }}</strong>
+      </span>
+    </button>
   </nav>
 </header>

@@ -668,6 +668,30 @@
       }
     }
 
+    <!-- Automation confirmation bubble (only when Automation Mode is OFF) -->
+    @if (automation.pendingNavigation(); as navReq) {
+      <div class="message assistant animate-msg automation-confirm">
+        <span class="message-label">{{ assistantName }}</span>
+        <div class="automation-card">
+          <p class="automation-title">
+            I can continue this journey for you.
+          </p>
+          <p class="automation-body">
+            I detected that you might want to navigate to
+            <strong>{{ navReq.target }}</strong>. Should I take you there now?
+          </p>
+          <div class="automation-actions">
+            <button type="button" class="btn-primary" (click)="automation.confirmNavigation()">
+              Yes, continue
+            </button>
+            <button type="button" class="btn-secondary" (click)="automation.cancelNavigation()">
+              No, stay here
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
     @if (isTyping()) {
       <div class="message assistant typing animate-msg">
         <span class="message-label">{{ assistantName }}</span>
