@@ -140,7 +140,7 @@ export interface ChatResponse {
 })
 export class ChatApiService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:8000/api/v1/public/chat';
+  private apiUrl = 'https://healthcare-companion.up.railway.app/api/v1/public/chat';
 
   sendMessage(request: ChatRequest): Observable<ChatResponse> {
     return this.http.post<ChatResponse>(this.apiUrl, request);
