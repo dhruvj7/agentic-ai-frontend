@@ -106,7 +106,7 @@ export class BookAppointment implements OnInit {
         this.showSuccess.set(true);
         
 
-        setTimeout(() => this.router.navigate(['/']), 3000);
+        setTimeout(() => this.router.navigate(['/chat']), 3000);
       },
       error: (err) => {
         console.error('Booking failed:', err);
