@@ -29,7 +29,8 @@ export class Doctors implements OnInit {
 
   ngOnInit(): void {
     const pending = this.automation.pendingSlotConfirmation();
-    if (pending?.doctor && pending?.slot) {
+    // Only show confirmation modal if auto-navigate is OFF
+    if (pending?.doctor && pending?.slot && !this.automation.automationEnabled()) {
       this.selectedDoctorId.set(pending.doctor.id);
       this.selectedSlotId.set(pending.slot.id);
       this.showSlotConfirmModal.set(true);

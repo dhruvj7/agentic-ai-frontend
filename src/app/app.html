@@ -11,11 +11,19 @@
   <div class="step-transition-overlay" (click)="automation.stayOnCurrentStep()">
     <div class="step-transition-modal" (click)="$event.stopPropagation()">
       <div class="step-transition-header">
-        <span class="step-transition-icon">{{ pending.isInitial ? '✨' : '🚀' }}</span>
-        <h3>{{ pending.isInitial ? 'Begin Your Journey' : 'Ready for Next Step?' }}</h3>
-        <p class="step-transition-desc">
-          {{ pending.isInitial ? 'Your first step:' : "You've completed the current step. Here's what's next:" }}
-        </p>
+        @if (pending.step.intent === 'appointment_booking' || pending.step.target === 'book-appointment' || pending.step.target === 'booking') {
+          <span class="step-transition-icon">📅</span>
+          <h3>Booking Your Appointment</h3>
+          <p class="step-transition-desc">
+            I'm booking an appointment for you with the first available doctor.
+          </p>
+        } @else {
+          <span class="step-transition-icon">{{ pending.isInitial ? '✨' : '🚀' }}</span>
+          <h3>{{ pending.isInitial ? 'Begin Your Journey' : 'Ready for Next Step?' }}</h3>
+          <p class="step-transition-desc">
+            {{ pending.isInitial ? 'Your first step:' : "You've completed the current step. Here's what's next:" }}
+          </p>
+        }
       </div>
       
       <div class="step-transition-content">
@@ -26,8 +34,23 @@
             <span class="step-label">{{ getStepLabel(pending.step.intent) }}</span>
           </div>
           <p class="step-message">{{ pending.step.message }}</p>
+          
           @if (pending.step.data?.destination) {
             <p class="step-detail">📍 Destination: {{ pending.step.data.destination }}</p>
+          }
+          
+          @if ((pending.step.intent === 'appointment_booking' || pending.step.target === 'book-appointment' || pending.step.target === 'booking') && pending.step.data?.doctor && pending.step.data?.slot) {
+            <div class="booking-details">
+              <p class="step-detail">
+                <strong>👨‍⚕️ Doctor:</strong> {{ pending.step.data.doctor.name }}
+              </p>
+              <p class="step-detail">
+                <strong>📅 Date & Time:</strong> {{ formatSlotLabel(pending.step.data.slot) }}
+              </p>
+              <p class="step-detail">
+                <strong>🏥 Specialty:</strong> {{ pending.step.data.doctor.specialty }}
+              </p>
+            </div>
           }
         </div>
       </div>
@@ -45,7 +68,11 @@
           class="btn-proceed-step"
           (click)="automation.confirmStepAndNavigate()"
         >
-          {{ pending.isInitial ? 'Start Journey' : 'Continue to Next Step' }}
+          @if (pending.step.intent === 'appointment_booking' || pending.step.target === 'book-appointment' || pending.step.target === 'booking') {
+            Continue to Booking
+          } @else {
+            {{ pending.isInitial ? 'Start Journey' : 'Continue to Next Step' }}
+          }
         </button>
       </div>
     </div>

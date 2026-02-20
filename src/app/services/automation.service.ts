@@ -120,13 +120,22 @@ export class AutomationService {
       this._currentStepIndex.set(0);
       this.startSequentialNavigation();
     } else if (steps.length === 1) {
-      // Single step - use old flow
-      this.scheduleOrConfirm({
-        target: steps[0].target,
-        intent: steps[0].intent,
-        message: steps[0].message,
-        ...steps[0].data,
-      });
+      // Single step - show popup modal for booking steps, otherwise use old flow
+      const step = steps[0];
+      if ((step.target === 'book-appointment' || step.target === 'booking' || step.intent === 'appointment_booking') && this._automationEnabled()) {
+        // Show popup modal for booking steps when auto-navigate is ON
+        this._navigationQueue.set([step]);
+        this._currentStepIndex.set(0);
+        this.startSequentialNavigation();
+      } else {
+        // Use old flow for other steps
+        this.scheduleOrConfirm({
+          target: step.target,
+          intent: step.intent,
+          message: step.message,
+          ...step.data,
+        });
+      }
     }
   }
 
@@ -167,22 +176,44 @@ export class AutomationService {
       }
 
       if (doctors.length) {
-        const wantsBook = userInput.includes('book') || userInput.includes('first available') || userInput.includes('first slot');
+        // Enhanced detection for booking intent
+        const wantsBook = userInput.includes('book') || 
+                          userInput.includes('first available') || 
+                          userInput.includes('first slot') ||
+                          userInput.includes('first doctor') ||
+                          (userInput.includes('first') && (userInput.includes('doctor') || userInput.includes('slot')));
         const firstDoctor = this.normalizeDoctor(doctors[0]);
         const firstSlot = wantsBook ? this.getFirstSlot(firstDoctor) : null;
 
-        steps.push({
-          id: 'doctors',
-          intent: 'doctor_suggestion',
-          target: 'doctors',
-          message: 'Let me show you available doctors.',
-          priority: 1,
-          data: wantsBook && firstSlot ? {
-            doctor: firstDoctor,
-            slot: { id: firstSlot.id, slot_date: firstSlot.slot_date, slot_time: firstSlot.slot_time },
-          } : undefined,
-          completed: false,
-        });
+        // If user wants to book first doctor/first slot and auto-navigate is ON, skip doctors page and go directly to booking
+        if (wantsBook && firstSlot && this._automationEnabled()) {
+          // Add a booking step that directly navigates to booking page
+          steps.push({
+            id: 'booking',
+            intent: 'appointment_booking',
+            target: 'book-appointment',
+            message: 'Booking your appointment with the first available doctor.',
+            priority: 1,
+            data: {
+              doctor: firstDoctor,
+              slot: { id: firstSlot.id, slot_date: firstSlot.slot_date, slot_time: firstSlot.slot_time },
+            },
+            completed: false,
+          });
+        } else {
+          steps.push({
+            id: 'doctors',
+            intent: 'doctor_suggestion',
+            target: 'doctors',
+            message: 'Let me show you available doctors.',
+            priority: 1,
+            data: wantsBook && firstSlot ? {
+              doctor: firstDoctor,
+              slot: { id: firstSlot.id, slot_date: firstSlot.slot_date, slot_time: firstSlot.slot_time },
+            } : undefined,
+            completed: false,
+          });
+        }
       }
     }
 
@@ -299,7 +330,12 @@ export class AutomationService {
     const allIntents = new Set<string>([...intents.map((i: string) => String(i).toLowerCase())]);
     const wantsInsurance = allIntents.has('insurance_verification') || allIntents.has('insurance_validation');
     const wantsDoctors = allIntents.has('symptom_analysis') || allIntents.has('doctor_suggestion');
-    const wantsBook = userInput.includes('book') || userInput.includes('first available') || userInput.includes('first slot');
+    // Enhanced detection for booking intent - check for phrases like "first doctor", "first slot", "book appointment"
+    const wantsBook = userInput.includes('book') || 
+                      userInput.includes('first available') || 
+                      userInput.includes('first slot') ||
+                      userInput.includes('first doctor') ||
+                      (userInput.includes('first') && (userInput.includes('doctor') || userInput.includes('slot')));
 
     if (wantsInsurance) {
       this.scheduleOrConfirm({
@@ -332,18 +368,39 @@ export class AutomationService {
         const firstSlot = wantsBook ? this.getFirstSlot(firstDoctor) : null;
 
         if (wantsBook && firstSlot) {
-          this._pendingSlotConfirmation.set({
-            target: 'doctors',
-            intent: intents,
-            doctor: firstDoctor,
-            slot: { id: firstSlot.id, slot_date: firstSlot.slot_date, slot_time: firstSlot.slot_time },
-          });
-          this.scheduleOrConfirm({
-            target: 'doctors',
-            intent: intents,
-            doctor: firstDoctor,
-            slot: { id: firstSlot.id, slot_date: firstSlot.slot_date, slot_time: firstSlot.slot_time },
-          });
+          // If auto-navigate is ON, show popup modal then navigate to booking page
+          if (this._automationEnabled()) {
+            // Create a booking step and show popup modal
+            const bookingStep: NavigationStep = {
+              id: 'booking',
+              intent: 'appointment_booking',
+              target: 'book-appointment',
+              message: 'Booking your appointment with the first available doctor.',
+              priority: 1,
+              data: {
+                doctor: firstDoctor,
+                slot: { id: firstSlot.id, slot_date: firstSlot.slot_date, slot_time: firstSlot.slot_time },
+              },
+              completed: false,
+            };
+            this._navigationQueue.set([bookingStep]);
+            this._currentStepIndex.set(0);
+            this.startSequentialNavigation();
+          } else {
+            // Auto-navigate is OFF - show confirmation modal on doctors page
+            this._pendingSlotConfirmation.set({
+              target: 'doctors',
+              intent: intents,
+              doctor: firstDoctor,
+              slot: { id: firstSlot.id, slot_date: firstSlot.slot_date, slot_time: firstSlot.slot_time },
+            });
+            this.scheduleOrConfirm({
+              target: 'doctors',
+              intent: intents,
+              doctor: firstDoctor,
+              slot: { id: firstSlot.id, slot_date: firstSlot.slot_date, slot_time: firstSlot.slot_time },
+            });
+          }
         } else {
           this.scheduleOrConfirm({
             target: 'doctors',
@@ -434,6 +491,9 @@ export class AutomationService {
       setTimeout(() => this.markStepCompleted(currentStep.id), 1000);
     } else if (currentStep.target === 'insurance' && currentRoute === '/insurance') {
       // Step completed when user reaches insurance page
+      setTimeout(() => this.markStepCompleted(currentStep.id), 1000);
+    } else if ((currentStep.target === 'book-appointment' || currentStep.target === 'booking') && currentRoute.startsWith('/book-appointment')) {
+      // Step completed when user reaches booking page
       setTimeout(() => this.markStepCompleted(currentStep.id), 1000);
     }
   }
@@ -598,6 +658,18 @@ export class AutomationService {
     }
     if (target === 'doctors' || target === 'doctor_list') {
       this.router.navigate(['/doctors']);
+      return;
+    }
+    if (target === 'book-appointment' || target === 'booking') {
+      // Navigate directly to booking page with doctor and slot info
+      if (req.doctor && req.slot) {
+        this.router.navigate(['/book-appointment', req.doctor.id], {
+          queryParams: { slotId: req.slot.id, doctorId: req.doctor.id },
+        });
+      } else {
+        // Fallback to doctors page if no doctor/slot specified
+        this.router.navigate(['/doctors']);
+      }
       return;
     }
     if (target === 'chat') {
