@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import {environment } from '../../../environment';
 
 export interface InsuranceContext {
   provider_name: string;
@@ -140,7 +141,7 @@ export interface ChatResponse {
 })
 export class ChatApiService {
   private http = inject(HttpClient);
-  private apiUrl = 'https://healthcare-companion.up.railway.app/api/v1/public/chat';
+  private apiUrl = `${environment.apiBaseUrl}/chat`;
 
   sendMessage(request: ChatRequest): Observable<ChatResponse> {
     return this.http.post<ChatResponse>(this.apiUrl, request);

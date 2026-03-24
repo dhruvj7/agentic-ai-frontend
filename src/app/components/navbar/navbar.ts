@@ -1,6 +1,7 @@
-import { Component, signal, inject, afterNextRender } from '@angular/core';
+import { Component, signal, inject, afterNextRender, effect } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { AutomationService } from '../../services/automation.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-navbar',
@@ -18,6 +19,12 @@ export class Navbar {
   navigationQueue = this.automation.navigationQueue;
   currentStepIndex = this.automation.currentStepIndex;
 
+  isLoggedIn = false;
+
+  ngOnInit(){
+    
+  }
+
   getStepLabel(intent: string): string {
     const labels: Record<string, string> = {
       'doctor_suggestion': 'View Doctors',
@@ -29,12 +36,21 @@ export class Navbar {
     return labels[intent] || intent.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   }
 
-  constructor() {
+  constructor(public authService: AuthService) {
     afterNextRender(() => {
       if (!this.automation.hasSeenIntro()) {
         setTimeout(() => this.showAutomationInfo.set(true), 600);
       }
     });
+
+    effect(() => {
+    const isAuth = this.authService.isAuthenticated();
+    if (isAuth) {
+      this.isLoggedIn = true;
+    } else {
+      this.isLoggedIn = false;
+    }
+  });
   }
 
   toggleMenu(): void {
