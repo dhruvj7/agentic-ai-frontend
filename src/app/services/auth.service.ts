@@ -3,9 +3,10 @@ import { Router } from '@angular/router';
 import { environment } from '../../../environment';
 
 export interface UserInfo {
-  name: string;
-  email: string;
-  picture: string;
+  name: string,
+  email: string,
+  picture: string,
+  access_token: string
 }
 
 @Injectable({ providedIn: 'root' })

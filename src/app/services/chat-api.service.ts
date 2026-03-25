@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import {environment } from '../../../environment';
+import { AuthService } from './auth.service';
 
 export interface InsuranceContext {
   provider_name: string;
@@ -140,10 +141,17 @@ export interface ChatResponse {
   providedIn: 'root'
 })
 export class ChatApiService {
+  private authService = inject(AuthService);
   private http = inject(HttpClient);
   private apiUrl = `${environment.apiBaseUrl}/chat`;
+  
 
   sendMessage(request: ChatRequest): Observable<ChatResponse> {
-    return this.http.post<ChatResponse>(this.apiUrl, request);
+    const token = this.authService.user()?.access_token;
+    const headers = {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`
+  }
+    return this.http.post<ChatResponse>(this.apiUrl, request , { headers: headers });
   }
 }
