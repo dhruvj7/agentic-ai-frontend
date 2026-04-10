@@ -1,10 +1,11 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, Validators, FormGroup } from '@angular/forms';
 import { DoctorMatchService } from '../../services/doctor-match.service';
 import { ChatApiService, ChatRequest } from '../../services/chat-api.service'; // Ensure correct path
 import { Doctor } from '../../models/doctor.model';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-book-appointment',
@@ -14,29 +15,44 @@ import { Doctor } from '../../models/doctor.model';
   styleUrls: ['./book-appointment.scss']
 })
 export class BookAppointment implements OnInit {
+  private readonly CONTACT_PHONE_KEY = 'booking_contact_phone';
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private fb = inject(FormBuilder);
   private doctorMatchService = inject(DoctorMatchService);
   private chatApiService = inject(ChatApiService); 
+  readonly authService = inject(AuthService);
 
   isSubmitting = signal(false);
   showSuccess = signal(false);
   appointmentDetails = signal<{doctor: Doctor, slot: any} | null>(null);
   errorMessage = signal<string | null>(null);
+  private autoSubmitAttempted = signal(false);
 
   bookingForm: FormGroup = this.fb.group({
     patientName: ['', [Validators.required, Validators.minLength(2)]],
-    mobileNumber: ['', [Validators.required, Validators.pattern('^[0-9]{10}$')]],
+    mobileNumber: ['', [Validators.pattern('^[0-9]{10}$')]],
     email: ['', [Validators.required, Validators.email]],
     notes: [''] 
   });
 
+  constructor() {
+    effect(() => {
+      const user = this.authService.user();
+      if (!user) return;
+
+      this.prefillFormFromUser(user.name, user.email);
+      this.updateMobileValidator();
+      this.tryAutoSubmit();
+    });
+  }
+
   ngOnInit() {
     this.route.queryParams.subscribe(params => {
-      const doctorId = Number(params['doctorId']);
+      const routeDoctorId = Number(this.route.snapshot.paramMap.get('id'));
+      const doctorId = Number(params['doctorId'] || routeDoctorId);
       const slotId = Number(params['slotId']);
-      if (doctorId && slotId) {
+      if (doctorId) {
         this.loadData(doctorId, slotId);
       } else {
         this.router.navigate(['/doctors']);
@@ -48,11 +64,55 @@ export class BookAppointment implements OnInit {
     const doctors = this.doctorMatchService.matchedDoctors();
     const doctor = doctors.find(d => d.id === doctorId);
     if (doctor) {
-      const slot = doctor.slots?.find(s => s.id === slotId);
+      const slot = slotId
+        ? doctor.slots?.find(s => s.id === slotId)
+        : doctor.slots?.[0];
       if (slot) {
         this.appointmentDetails.set({ doctor, slot });
+        this.tryAutoSubmit();
       }
     }
+  }
+
+  private prefillFormFromUser(name: string, email: string): void {
+    const currentName = this.bookingForm.get('patientName')?.value;
+    const currentEmail = this.bookingForm.get('email')?.value;
+    const savedPhone = localStorage.getItem(this.CONTACT_PHONE_KEY);
+
+    if (!currentName && name) {
+      this.bookingForm.patchValue({ patientName: name });
+    }
+
+    if (!currentEmail && email) {
+      this.bookingForm.patchValue({ email });
+    }
+
+    if (!this.bookingForm.get('mobileNumber')?.value && savedPhone) {
+      this.bookingForm.patchValue({ mobileNumber: savedPhone });
+    }
+  }
+
+  private updateMobileValidator(): void {
+    const mobileControl = this.bookingForm.get('mobileNumber');
+    if (!mobileControl) return;
+
+    const validators = [Validators.pattern('^[0-9]{10}$')];
+    if (!this.authService.isAuthenticated()) {
+      validators.unshift(Validators.required);
+    }
+
+    mobileControl.setValidators(validators);
+    mobileControl.updateValueAndValidity({ emitEvent: false });
+  }
+
+  private tryAutoSubmit(): void {
+    if (this.autoSubmitAttempted()) return;
+    if (!this.authService.isAuthenticated()) return;
+    if (!this.appointmentDetails()) return;
+    if (this.bookingForm.invalid) return;
+
+    this.autoSubmitAttempted.set(true);
+    setTimeout(() => this.onSubmit(), 250);
   }
 
   onSubmit() {
@@ -80,13 +140,18 @@ export class BookAppointment implements OnInit {
 
     this.isSubmitting.set(true);
     const details = this.appointmentDetails()!;
+    const phone = this.bookingForm.value.mobileNumber || 'Not provided';
+
+    if (this.bookingForm.value.mobileNumber) {
+      localStorage.setItem(this.CONTACT_PHONE_KEY, this.bookingForm.value.mobileNumber);
+    }
 
     // Construct the Agentic Message
     const agentMessage = `BOOK_APPOINTMENT: Please book an appointment for ${details.doctor.name} (ID: ${details.doctor.id}). 
     Slot Details: ID ${details.slot.id}, Date ${details.slot.slot_date}, Time ${details.slot.slot_time}.
     Patient Details:
     - Name: ${this.bookingForm.value.patientName}
-    - Phone: ${this.bookingForm.value.mobileNumber}
+    - Phone: ${phone}
     - Email: ${this.bookingForm.value.email}
     - Notes: ${this.bookingForm.value.notes || 'None'}`;
 

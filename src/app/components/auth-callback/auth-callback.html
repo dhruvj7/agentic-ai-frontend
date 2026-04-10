@@ -1,0 +1,15 @@
+    <div class="callback-container">
+      <ng-container *ngIf="!error; else errorTpl">
+        <div class="spinner"></div>
+        <p>Signing you in…</p>
+      </ng-container>
+
+      <ng-template #errorTpl>
+        <div class="error-box">
+          <span class="icon">✕</span>
+          <h2>Authentication Failed</h2>
+          <p>{{ error }}</p>
+          <button (click)="retry()">Try Again</button>
+        </div>
+      </ng-template>
+    </div>

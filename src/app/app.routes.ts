@@ -2,6 +2,18 @@ import { Routes } from '@angular/router';
 
 export const routes: Routes = [
   { path: '', loadComponent: () => import('./pages/landing/landing').then(m => m.Landing) },
+  {
+    path: 'login',
+    loadComponent: () =>
+      import('./components/login/login').then((m) => m.LoginComponent),
+  },
+  {
+    path: 'auth/callback',
+    loadComponent: () =>
+      import('./components/auth-callback/auth-callback').then(
+        (m) => m.AuthCallback
+      ),
+  },
   { path: 'chat', loadComponent: () => import('./pages/chat/chat').then(m => m.Chat) },
   { path: 'doctors', loadComponent: () => import('./pages/doctors/doctors').then(m => m.Doctors) },
   { path: 'book-appointment/:id', loadComponent: () => import('./pages/book-appointment/book-appointment').then(m => m.BookAppointment) },

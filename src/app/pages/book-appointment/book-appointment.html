@@ -31,6 +31,11 @@
 
       <div class="form-card">
         <h2>Patient Details</h2>
+        @if (authService.isAuthenticated()) {
+          <p class="auto-fill-note">
+            Your name and email are already filled from your signed-in account.
+          </p>
+        }
         @if (errorMessage()) {
           <div class="form-error-message">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -48,6 +53,7 @@
               type="text" 
               formControlName="patientName" 
               placeholder="Enter your name"
+              [readonly]="authService.isAuthenticated()"
               [class.error]="bookingForm.get('patientName')?.invalid && bookingForm.get('patientName')?.touched"
               (input)="onFieldChange()">
             @if (bookingForm.get('patientName')?.invalid && bookingForm.get('patientName')?.touched) {
@@ -66,7 +72,7 @@
             <input 
               type="tel" 
               formControlName="mobileNumber" 
-              placeholder="10-digit number"
+              [placeholder]="authService.isAuthenticated() ? '10-digit number (optional if already available)' : '10-digit number'"
               [class.error]="bookingForm.get('mobileNumber')?.invalid && bookingForm.get('mobileNumber')?.touched"
               (input)="onFieldChange()"
               maxlength="10">
@@ -87,6 +93,7 @@
               type="email" 
               formControlName="email" 
               placeholder="email@example.com"
+              [readonly]="authService.isAuthenticated()"
               [class.error]="bookingForm.get('email')?.invalid && bookingForm.get('email')?.touched"
               (input)="onFieldChange()">
             @if (bookingForm.get('email')?.invalid && bookingForm.get('email')?.touched) {
